@@ -1,3 +1,7 @@
 #!/usr/bin/env bash
-echo 'mass apk installer osx v1.6'
-./apk_mass_install adb/ apk/ n
+echo 'mass apk installer osx v2.0'
+./apk_mass_install
+
+
+
+
