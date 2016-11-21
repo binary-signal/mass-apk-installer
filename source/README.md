@@ -1,7 +1,7 @@
 # mass-apk-installer
 
 Read me file for apk install 
-Last Update 20/9/2012 @ 6:50am (UTC +3:00)
+Last Update 22/11/2016 @ 6:50am (UTC +3:00)
 
 Table of contents:
 
@@ -38,23 +38,11 @@ Table of contents:
 
     Important Notice 2: Installing apk's into /system partition is dangerous !!! use it at your own risk
 
-0x3: Archive Contents
 
-    apkinstall.rar -+
-                    |- ADB -+
-                    |       |-adb.exe
-                    |       |-adblinux
-                    |       |-adbmac
-                    |       |-AdbWinApi.dll
-                    |       |-AdbWinUsbApi.dll
-                    |-apk -+
-                    |-apk_mass_install.exe
-                    |-run.bat
-                    |-run_nocheck.nat
-
-     Notes: '+' sign is for directories
 
 0x4: Change Log
+v 2.0 Update Dated app
+	Update code addded option to back files rom device.Backed up files can now be encrypted with AES and exported to zip files. Apk version and info is stored in sqlite database. The new version supports osx 
 
 v 1.5 Code maintenance
 	  Fixed a bug when trying to create a directory already existed returned errors
