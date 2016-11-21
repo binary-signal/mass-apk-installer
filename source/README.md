@@ -41,6 +41,7 @@ Table of contents:
 
 
 0x4: Change Log
+
 v 2.0 Update Dated app
 	Update code addded option to back files rom device.Backed up files can now be encrypted with AES and exported to zip files. Apk version and info is stored in sqlite database. The new version supports osx 
 
