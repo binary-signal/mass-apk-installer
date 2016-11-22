@@ -15,6 +15,8 @@ Table of contents:
 0x0: Contact Information
 
     You can sent requests, bugs and anything you want at: mvaggelis@gmail.com
+    Support for the software is provided through xda developers forum see link below
+    http://forum.xda-developers.com/showthread.php?t=1310742
 
 0x1: Software Description
 
