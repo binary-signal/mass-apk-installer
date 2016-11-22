@@ -40,13 +40,13 @@ Table of contents:
 
 0x3: Command Line Arguemnts
 
-   	-m', '--mode', help='mode can be install or backup ' 
-	-b', '--backup', help='Back apk from device' 
-	-s', '--source', help='source' 
-	-d', '--destination', help='destination ' 
+
+	Full list of command line arguments available
+	-m', '--mode', help='mode can be install or backup ' 
+	-s', '--source', help='source folder' 
+	-d', '--destination', help='destination folder ' 
 	-a', '--archive', help='make a zip archive from backup' 
 	-e', '--encryption', help='encrypt archive with AES' 
-	-i', '--install', help='install apks device' 
 	-v', '--verbose', help='Print verbose messages during execution' 
 
 0x4: Change Log
