@@ -38,21 +38,16 @@ Table of contents:
 
     Important Notice 2: Installing apk's into /system partition is dangerous !!! use it at your own risk
 
-0x3: Archive Contents
+0x3: Command Line Arguemnts
 
-    apkinstall.rar -+
-                    |- ADB -+
-                    |       |-adb.exe
-                    |       |-adblinux
-                    |       |-adbmac
-                    |       |-AdbWinApi.dll
-                    |       |-AdbWinUsbApi.dll
-                    |-apk -+
-                    |-apk_mass_install.exe
-                    |-run.bat
-                    |-run_nocheck.nat
-
-     Notes: '+' sign is for directories
+   	-m', '--mode', help='mode can be install or backup ' 
+	-b', '--backup', help='Back apk from device' 
+	-s', '--source', help='source' 
+	-d', '--destination', help='destination ' 
+	-a', '--archive', help='make a zip archive from backup' 
+	-e', '--encryption', help='encrypt archive with AES' 
+	-i', '--install', help='install apks device' 
+	-v', '--verbose', help='Print verbose messages during execution' 
 
 0x4: Change Log
 
