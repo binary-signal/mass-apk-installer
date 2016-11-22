@@ -1,14 +1,14 @@
 # mass-apk-installer
 
 Read me file for apk install 
-Last Update 20/9/2012 @ 6:50am (UTC +3:00)
+Last Update 22/11/2016 @ 6:50am (UTC +3:00)
 
 Table of contents:
 
 0x0: Contact Information
 0x1: Software Description
 0x2: How to use this software
-0x3: Archive Contents
+0x3: Command Line Arguemnts
 0x4: Change Log
 
 
