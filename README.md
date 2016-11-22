@@ -51,6 +51,10 @@ Table of contents:
 
 0x4: Change Log
 
+v 2.0 New features
+
+	New version of mass-apk-installer comes with support for osx operating system.Also the command line argumenes are 	  parsed with a new way. Now applicatiion can install apk to android devices and make back of apks from android               devices. 	Backup can be exported to single folder or zip into archives. Archives can also be encrypted with AES if     	   user wants to.
+
 v 1.5 Code maintenance
 	  Fixed a bug when trying to create a directory already existed returned errors
 	  Added some new future's overide the adb check state and refactored the dummy install process for apk's
