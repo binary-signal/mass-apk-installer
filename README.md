@@ -20,23 +20,11 @@ Table of contents:
 
     This software automates the installation of apk's, Android applications to your Android phone. It 
     uses the adb interface provided by Google to install application via command line prompt to the 
-    phone
+    phone. In the latest version the software can make back up of apk from android devices
 
 0x2: How to use this software
 
-    After downloading the rar file apkinstall.rar extract the contents of the archive in your desired
-    directory, for example C:\Users\User\Desktop\apkinstall. Then then open the newly creates directory.
-    You will notice there are a couple of file and some folders.Put tou apk's into tha apk folder and 
-    then double click the run.bat if tou want an ordinary install or double click run_sys.bat to install
-    to /system partition. A console will appear and install automatically every apk you put in
-    the apk folder. After install the console will exit and you are done. Unplug your phone and enjoy
-    your new apps.
-    
-    Important Notice: In order the program work succesfully you MUST have installed the usb drivers
-    for your phone model ! For sony erricson just install pc companion. This sofware was tested in
-    Windows Vista x86/x86_x64 & Windows 7 x86/x86_x64, propably Windows Xp SP2 and above is supported.
-
-    Important Notice 2: Installing apk's into /system partition is dangerous !!! use it at your own risk
+	To do...
 
 0x3: Command Line Arguemnts
 
