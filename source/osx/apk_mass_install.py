@@ -57,11 +57,6 @@ D_INSTALL = 0  # don't perform actuall installation of apk
 
 ADB_OVERIDE = 0  # overides adb state check
 
-ARGV_LOW = -1  # define arguments states
-ARGV_HIGH = -2
-ARGV_ERROR = -3
-ARGV_NONE = 0
-
 MODE_SYS = 0  # way to install apk
 MODE_NORMAL = 1
 
