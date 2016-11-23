@@ -15,7 +15,7 @@ Purpose:  This module automates the installation of multiple apk's, apk is the
  Author:      Evaggelos Mouroutsos
 
  Created:     19/10/2011
- Last Modified: 22/11/2016
+ Last Modified: 24/11/2016
  Copyright:   (c) Evaggelos Mouroutsos 2016
  Licence:
  Copyright (c) 2016, Evaggelos Mouroutsos
@@ -53,9 +53,11 @@ from archive_support import extractZip , make_zip
 import argparse
 from encryption_support import encryption_support
 
-D_INSTALL = 0  # don't perform actuall installation of apk
 
+
+D_INSTALL = 0  # don't perform actuall installation of apk
 ADB_OVERIDE = 0  # overides adb state check
+
 
 MODE_SYS = 0  # way to install apk
 MODE_NORMAL = 1
@@ -108,13 +110,18 @@ def get_apk_version(apk):
     return dict
 
 
-"""Pull apk from device
-Pulls apk specified in pkgDic variable from android device using adb
-renames extracted apk to  filename specified in pkgDic key value
-pkgDic is an one key pair value dictionary."""
+
 
 
 def pull_apk(pkgDic):
+    """
+    Pulls apk specified in pkgDic variable from android device using adb
+    renames extracted apk to filename specified in pkgDic key value pair
+    pkgDic is an one value dictionary.
+    :param pkgDic: {package name : package path}
+    :return: None
+    """
+
     pkgName = pkgDic.keys()
 
     cmd = "./adb pull " + pkgDic[pkgName[0]]
@@ -122,25 +129,26 @@ def pull_apk(pkgDic):
     if os.path.isfile("base.apk"):
         os.rename("base.apk", pkgName[0] + ".apk")
 
-
-"""List packages from device
-list all packages using adb installed in android device apply filter
-PKG_FILTER to get only apk packages you are interested. By default
-listing only 3d party apps.
-"""
-
-
 def package_managment(PKG_FILTER=PKG_APP):
-    # list all 3d party aps by default over ride with PKG_FILTER
+    """
+    list all packages installed installed in android device. Results can be
+    filtered with PKG_FILTER to get only apk packages you are interested. By default
+    listing only 3d party apps.
+    :param PKG_FILTER:
+    :return:
+    """
+
     pkgPrefix = "package:"
     cmd = "./adb shell pm list packages " + PKG_FILTER
     state = subprocess.check_output(cmd, shell=True)
     pkg_raw = state.splitlines()
     pkg = []
 
-    """adb returns packages name  in the form
+    """
+    adb returns packages name  in the form
     package:com.skype.raider
-    we need to strip package: prefix"""
+    we need to strip package: prefix
+    """
     for i in pkg_raw:
         if i.startswith(pkgPrefix):
             y = [x.strip() for x in i.split(':')]
@@ -148,25 +156,31 @@ def package_managment(PKG_FILTER=PKG_APP):
     return pkg
 
 
-"""Returns full path of package in android device storage"""
+
 
 
 def get_package_full_path(pkgName):
+    """
+     Returns full path of package in android device storage specified by argument
+    :param pkgName:
+    :return:
+    """
+
     cmd = "./adb shell pm path " + pkgName
     state = subprocess.check_output(cmd, shell=True)
 
-    """ adb returns packages name  in the form
+    """
+    adb returns packages name  in the form
     package:/data/app/com.skype.raider-2/base.apk
-     we need to strip package: prefix"""
+     we need to strip package: prefix
+     """
     pkg_path = [x.strip() for x in state.split(':')]
     return pkg_path[1]
 
-
-"""get logs from adroid device
-used for debugging """
-
-
 def adb_logs():
+    """
+    get logs from android device used for debugging
+    """
     if not adb_state():
         print('Starting adb server...')
         adb_start()
@@ -174,12 +188,11 @@ def adb_logs():
     state = subprocess.Popen(cmd, shell=True)
     return state.splitlines()
 
-
-"""starts adb server"""
-
-
 def adb_start():
-    print os.getcwd()
+    """
+    starts adb server
+    """
+
     print('Starting adb server...')
     cmd = './adb start-server'  # command to adb
     state = os.system(cmd)  # execute the command in terminal
@@ -188,11 +201,11 @@ def adb_start():
         sys.exit(1)
     print('Make sure your Android phone is connected and debug mode is enabled !')
 
-
-"""kills adb server"""
-
-
 def adb_kill():
+    """
+    kills adb server
+    """
+
     print('Killing adb server...')
     cmd = './adb kill-server'  # command to adb
     state = os.system(cmd)  # execute command to terminal
@@ -200,12 +213,11 @@ def adb_kill():
         print ('%s: running %s failed' % (sys.argv[0], cmd))
         sys.exit(1)
 
-
-"""gets the state of adb server
-if state is device adb is connected"""
-
-
 def adb_state():
+    """
+    gets the state of adb server if state is device adb is connected
+    """
+
     if ADB_OVERIDE == 1:
         return True
     cmd = './adb get-state'
@@ -223,13 +235,22 @@ def adb_state():
 
     print "force install"
 
-
 def unistall_apk(apkName):  # to do
+    """
+    unistalls an apk
+    :param apkName: app to remove
+    :return: None
+    """
     print "Unistall apk"
 
 
-# install apk
+
 def adb_install(source_path):
+    """
+    Install package to android device
+    :param source_path: local path of the app
+    :return:
+    """
     # -d is to allow downgrade an apk
     # -r is to reinstall existing app
     cmd = './adb install -d -r ' + str(source_path)
@@ -251,8 +272,14 @@ def adb_install(source_path):
             return INSTALL_FAILURE  # general failure
 
 
-# install apk in system partition
+
 def adb_install_sys(source_path):
+    """
+    install apk in system partition
+    :param source_path:
+    :return:
+    """
+
     cmd = "adb push " + str(source_path) + " /system/app"
     print("Installing " + str(source_path))
     state = os.system(cmd)  # execute command to terminal
@@ -262,9 +289,11 @@ def adb_install_sys(source_path):
     else:
         return 0
 
-
-# modify permission on /system partition
 def adb_perm():
+    """
+    modify permission on /system partition
+    :return: None
+    """
     cmd0 = "./adb remount"  # mount as read write command
     cmd = "./adb shell chmod 777 /system"  # change permissions
 
@@ -282,6 +311,12 @@ def adb_perm():
 
 
 def rename_fix(old_name_list, apk_path):
+    """
+    replaces whitespaces from app name with underscores
+    :param old_name_list:
+    :param apk_path:
+    :return:
+    """
     new_name_list = []
     for index in range(len(old_name_list)):
         if old_name_list[index].find(' '):
@@ -296,6 +331,10 @@ def rename_fix(old_name_list, apk_path):
 
 
 def curr_dir_fix():
+    """
+    checks if whitespace are in the path
+    :return:
+    """
     print("Current dir is:" + os.curdir)
     if os.curdir.find(" ") == -1:
         print("No need for current directory fix !\m")
@@ -445,7 +484,6 @@ def main():
         # fix apk name replace space character with '_'
         fixed_name_list = rename_fix(list_of_apk, apk_path)
 
-        ############################################
         for file in fixed_name_list:  # use the fixed name list
             list_of_size.append(os.path.getsize(
                 apk_path + os.sep + file))  # calculate file size for each apk and store the results in a list
