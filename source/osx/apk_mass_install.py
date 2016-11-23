@@ -249,7 +249,7 @@ def adb_install(source_path):
     """
     Install package to android device
     :param source_path: local path of the app
-    :return:
+    :return: None
     """
     # -d is to allow downgrade an apk
     # -r is to reinstall existing app
