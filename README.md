@@ -5,22 +5,21 @@ Last Update 22/11/2016 @ 6:50am (UTC +3:00)
 
 # Table of contents:
 
-	0x0: Contact Information
-	0x1: Software Description
-	0x2: How to use this software
-	0x3: Command Line Arguemnts
-	0x4: Change Log
+	
+0x0: Contact Information
+0x1: Software Description
+0x2: How to use this software
+0x3: Command Line Arguemnts
+0x4: Change Log
 
 
 ## 0x0: Support Information
-
-    You can sent requests, bugs and anything you want at: mvaggelis@gmail.com
+You can sent requests, bugs and anything you want at: mvaggelis@gmail.com
     Support for the software is provided through xda developers forum see link below
     http://forum.xda-developers.com/showthread.php?t=1310742
 
 ## 0x1: Software Description
-
-    This software automates the installation and backing up of apk's, Android applications to your Android phone. It 
+This software automates the installation and backing up of apk's, Android applications to your Android phone. It 
     uses the adb interface provided by Google to install application via command line prompt to the 
     phone. 
 
