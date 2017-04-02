@@ -83,7 +83,7 @@ os_platform = 'osx'
 
 
 def get_apk_version(apk):
-    cmd = "./aapt dump badging " + apk
+    cmd = "./adb_osx/aapt dump badging " + apk
     state = subprocess.check_output(cmd, shell=True)
     firstLine = state.splitlines()[0]
     list = firstLine.split(" ")
@@ -117,10 +117,10 @@ def pull_apk(pkgDic):
     pkg_name = pkgDic.keys()
 
     if os_platform == 'osx':
-        cmd ='adb shell cat '+pkgDic[pkg_name[0]]+ ' > ' +"base.apk"
+        cmd ='./adb_osx/adb shell cat '+pkgDic[pkg_name[0]]+ ' > ' +"base.apk"
         #cmd = "./adb pull " + pkgDic[pkg_name[0]]
     elif os_platform == 'win':
-        cmd = "adb.exe pull " + pkgDic[pkg_name[0] ]
+        cmd = "adb_win/adb.exe pull " + pkgDic[pkg_name[0] ]
     print(cmd)
     state = subprocess.check_output(cmd,  shell=False)
     print (state)
@@ -139,9 +139,9 @@ def package_managment(PKG_FILTER):
 
 
     if os_platform == 'osx':
-        cmd = "./adb shell pm list packages " + PKG_FILTER
+        cmd = "./adb_osx/adb shell pm list packages " + PKG_FILTER
     elif os_platform == 'win':
-        cmd = "adb.exe shell pm list packages " + PKG_FILTER
+        cmd = "/adb_win/adb.exe shell pm list packages " + PKG_FILTER
     state = subprocess.check_output(cmd, shell=True)
     pkg_raw = state.splitlines()
     pkg = []
@@ -165,9 +165,9 @@ def get_package_full_path(pkg_name):
     :return:
     """
     if os_platform == 'osx':
-        cmd = "./adb shell pm path " + pkg_name
+        cmd = "./adb_osx/adb shell pm path " + pkg_name
     elif os_platform == 'win':
-        cmd = "adb.exe shell pm path " + pkg_name
+        cmd = "adb/win/adb.exe shell pm path " + pkg_name
 
     state = subprocess.check_output(cmd, shell=True)
 
@@ -187,9 +187,9 @@ def adb_start():
 
     print('Starting adb server...')
     if os_platform == 'osx':
-        cmd = './adb start-server'  # command to adb
+        cmd = './adb_osx/adb start-server'  # command to adb
     elif os_platform == 'win':
-        cmd = 'adb.exe start-server'  # command to adb
+        cmd = 'adb_win/adb.exe start-server'  # command to adb
     state = os.system(cmd)  # execute the command in terminal
     if state:
         print ('%s: running %s failed' % (sys.argv[0], cmd))
@@ -204,9 +204,9 @@ def adb_kill():
 
     print('Killing adb server...')
     if os_platform == 'osx':
-        cmd = './adb kill-server'  # command to adb
+        cmd = './adb_osx/adb kill-server'  # command to adb
     elif os_platform == 'win':
-        cmd = 'adb.exe kill-server'  # command to adb
+        cmd = 'adb_win/adb.exe kill-server'  # command to adb
     state = os.system(cmd)  # execute command to terminal
     if state:
         print ('%s: running %s failed' % (sys.argv[0], cmd))
@@ -219,9 +219,9 @@ def adb_state():
     """
 
     if os_platform == 'osx':
-        cmd = './adb get-state'
+        cmd = './adb_osx/adb get-state'
     elif os_platform == 'win':
-        cmd = 'adb.exe get-state'
+        cmd = 'adb_win/adb.exe get-state'
 
     output = os.popen(cmd)  # command to run
     res = output.readlines()  # res: output from running cmd
@@ -246,9 +246,9 @@ def adb_install(source_path):
     # -d is to allow downgrade of apk
     # -r is to reinstall existing apk
     if os_platform == 'osx':
-        cmd = './adb install -d -r ' + str(source_path)
+        cmd = './adb_osx/adb install -d -r ' + str(source_path)
     elif os_platform == 'win':
-        cmd = 'adb.exe install -d -r ' + str(source_path)
+        cmd = 'adb_win/adb.exe install -d -r ' + str(source_path)
     print('Installing ' + str(source_path))
 
     state = subprocess.check_output(cmd, shell=True)
