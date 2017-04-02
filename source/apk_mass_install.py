@@ -84,7 +84,12 @@ os_platform = 'osx'
 
 def get_apk_version(apk):
     cmd = "./adb_osx/aapt dump badging " + apk
-    state = subprocess.check_output(cmd, shell=True)
+    state = ""
+    try:
+        state = subprocess.check_output(cmd, shell=True)
+    except subprocess.CalledProcessError as e:
+        print ("error: ", e.returncode, e.message, e.cmd)
+
     firstLine = state.splitlines()[0]
     list = firstLine.split(" ")
     list2 = []
@@ -118,12 +123,12 @@ def pull_apk(pkgDic):
 
     if os_platform == 'osx':
         cmd ='./adb_osx/adb shell cat '+pkgDic[pkg_name[0]]+ ' > ' +"base.apk"
-        #cmd = "./adb pull " + pkgDic[pkg_name[0]]
+        #cmd = "./adb_osx/adb pull " + pkgDic[pkg_name[0]] doesn't work anymore after nougat update
     elif os_platform == 'win':
-        cmd = "adb_win/adb.exe pull " + pkgDic[pkg_name[0] ]
-    print(cmd)
-    state = subprocess.check_output(cmd,  shell=False)
-    print (state)
+        cmd = "adb_win/adb.exe pull " + pkgDic[pkg_name[0]]
+
+    state = subprocess.check_output(cmd,  shell=True)
+
     if os.path.isfile("base.apk"):
         os.rename("base.apk", pkg_name[0] + ".apk")
 
@@ -142,6 +147,7 @@ def package_managment(PKG_FILTER):
         cmd = "./adb_osx/adb shell pm list packages " + PKG_FILTER
     elif os_platform == 'win':
         cmd = "/adb_win/adb.exe shell pm list packages " + PKG_FILTER
+
     state = subprocess.check_output(cmd, shell=True)
     pkg_raw = state.splitlines()
     pkg = []
@@ -176,6 +182,7 @@ def get_package_full_path(pkg_name):
     package:/data/app/com.dog.raider-2/base.apk
      we need to strip package: prefix in returned string
     """
+    print('*'),
     pkg_path = [x.strip() for x in state.split(':')]
     return pkg_path[1]
 
