@@ -6,7 +6,7 @@ Last Update 2/4/2017
 # Table of contents:
 
 	
-0x0: Contact Information<br>
+0x0: Support Information<br>
 0x1: Software Description<br>
 0x2: How to use this software<br>
 0x3: Command Line Arguemnts<br>
