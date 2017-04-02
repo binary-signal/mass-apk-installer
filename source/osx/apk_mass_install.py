@@ -6,11 +6,11 @@
 Purpose:  This module automates the installation of multiple apk's, apk is the
            standard executable in Android platform made by Google
 
- How to:   OUTDATED ! [The module works with 2 command arguments the first is the filepath
+ How to:   The module works with 2 command arguments the first is the filepath
            of the adb executable which is the bridge connecting an android phone
            and a pc. The second argument is the directory of the apk to be installed
            in this directory must be only apk files.
-           example: python apk_mass_install C:\Android\bin\ C:\Downloads\apks]
+           example: python apk_mass_install C:\Android\bin\ C:\Downloads\apks
 
  Author:      Evaggelos Mouroutsos
 
@@ -44,23 +44,17 @@ Purpose:  This module automates the installation of multiple apk's, apk is the
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.   """""
 
 import os
+from platform import system
 import sys
 import time
 import shutil
 import subprocess
 from sqlite_support import db_init, db_connect, db_insert, db_empty_apk_table
-from archive_support import extractZip , make_zip
+from archive_support import extractZip, make_zip
 import argparse
 from encryption_support import encryption_support
 
 
-
-D_INSTALL = 0  # don't perform actuall installation of apk
-ADB_OVERIDE = 0  # overides adb state check
-
-
-MODE_SYS = 0  # way to install apk
-MODE_NORMAL = 1
 
 ARCHIVE_NAME = "apk_archive"  # archive options
 ARCHIVE_OUTPUT_DIR = "uncompressed"
@@ -72,11 +66,10 @@ ENC_DEST = None
 AES_KEY = None
 BLOCK_SIZE = None
 
-# Flags used for adb package listing from
-PKG_ALL = ""  # list all packages
-PKG_APP = "-3"  # list 3d party packages only (default)
-PKG_SYSTEM = "-S"  # list system packages only
-
+# Flags used for adb package listing
+pkg_flags = {'all': "",         # list all packages
+             'user': "-3",      # list 3d party packages only (default)
+             'system': "-S"}    # list system packages only
 BACKUP = 2  # application operation mode
 INSTALL = 3
 INSTALL_FORCE = False
@@ -85,6 +78,8 @@ INSTALL_OK = 1
 INSTALL_EXISTS = 2
 
 MODE = 2
+
+os_platform = 'osx'
 
 
 def get_apk_version(apk):
@@ -99,7 +94,7 @@ def get_apk_version(apk):
     # store apk information in dict
     # 'versionCode': "'35'",
     # 'platformBuildVersionName': "'5.1.1-1819727'",
-    # 'name': "'cz.hipercalc'",
+    # 'name': "'cz.google'",
     # 'versionName': "'4.1'"}
     dict = {}
     for i in list2:
@@ -108,9 +103,6 @@ def get_apk_version(apk):
         dict[i[0]] = i[1]
 
     return dict
-
-
-
 
 
 def pull_apk(pkgDic):
@@ -122,14 +114,21 @@ def pull_apk(pkgDic):
     :return: None
     """
 
-    pkgName = pkgDic.keys()
+    pkg_name = pkgDic.keys()
 
-    cmd = "./adb pull " + pkgDic[pkgName[0]]
-    state = subprocess.check_output(cmd, shell=True)
+    if os_platform == 'osx':
+        cmd ='adb shell cat '+pkgDic[pkg_name[0]]+ ' > ' +"base.apk"
+        #cmd = "./adb pull " + pkgDic[pkg_name[0]]
+    elif os_platform == 'win':
+        cmd = "adb.exe pull " + pkgDic[pkg_name[0] ]
+    print(cmd)
+    state = subprocess.check_output(cmd,  shell=False)
+    print (state)
     if os.path.isfile("base.apk"):
-        os.rename("base.apk", pkgName[0] + ".apk")
+        os.rename("base.apk", pkg_name[0] + ".apk")
 
-def package_managment(PKG_FILTER=PKG_APP):
+
+def package_managment(PKG_FILTER):
     """
     list all packages installed installed in android device. Results can be
     filtered with PKG_FILTER to get only apk packages you are interested. By default
@@ -138,8 +137,11 @@ def package_managment(PKG_FILTER=PKG_APP):
     :return:
     """
 
-    pkgPrefix = "package:"
-    cmd = "./adb shell pm list packages " + PKG_FILTER
+
+    if os_platform == 'osx':
+        cmd = "./adb shell pm list packages " + PKG_FILTER
+    elif os_platform == 'win':
+        cmd = "adb.exe shell pm list packages " + PKG_FILTER
     state = subprocess.check_output(cmd, shell=True)
     pkg_raw = state.splitlines()
     pkg = []
@@ -150,56 +152,50 @@ def package_managment(PKG_FILTER=PKG_APP):
     we need to strip package: prefix
     """
     for i in pkg_raw:
-        if i.startswith(pkgPrefix):
+        if i.startswith("package:"):
             y = [x.strip() for x in i.split(':')]
             pkg.append(y[1])
     return pkg
 
 
-
-
-
-def get_package_full_path(pkgName):
+def get_package_full_path(pkg_name):
     """
      Returns full path of package in android device storage specified by argument
-    :param pkgName:
+    :param pkg_name:
     :return:
     """
+    if os_platform == 'osx':
+        cmd = "./adb shell pm path " + pkg_name
+    elif os_platform == 'win':
+        cmd = "adb.exe shell pm path " + pkg_name
 
-    cmd = "./adb shell pm path " + pkgName
     state = subprocess.check_output(cmd, shell=True)
 
     """
     adb returns packages name  in the form
-    package:/data/app/com.skype.raider-2/base.apk
-     we need to strip package: prefix
-     """
+    package:/data/app/com.dog.raider-2/base.apk
+     we need to strip package: prefix in returned string
+    """
     pkg_path = [x.strip() for x in state.split(':')]
     return pkg_path[1]
 
-def adb_logs():
-    """
-    get logs from android device used for debugging
-    """
-    if not adb_state():
-        print('Starting adb server...')
-        adb_start()
-    cmd = './adb logcat'  # command to adb
-    state = subprocess.Popen(cmd, shell=True)
-    return state.splitlines()
 
 def adb_start():
     """
-    starts adb server
+    starts an instance of adb server
     """
 
     print('Starting adb server...')
-    cmd = './adb start-server'  # command to adb
+    if os_platform == 'osx':
+        cmd = './adb start-server'  # command to adb
+    elif os_platform == 'win':
+        cmd = 'adb.exe start-server'  # command to adb
     state = os.system(cmd)  # execute the command in terminal
     if state:
         print ('%s: running %s failed' % (sys.argv[0], cmd))
         sys.exit(1)
     print('Make sure your Android phone is connected and debug mode is enabled !')
+
 
 def adb_kill():
     """
@@ -207,20 +203,26 @@ def adb_kill():
     """
 
     print('Killing adb server...')
-    cmd = './adb kill-server'  # command to adb
+    if os_platform == 'osx':
+        cmd = './adb kill-server'  # command to adb
+    elif os_platform == 'win':
+        cmd = 'adb.exe kill-server'  # command to adb
     state = os.system(cmd)  # execute command to terminal
     if state:
         print ('%s: running %s failed' % (sys.argv[0], cmd))
         sys.exit(1)
 
+
 def adb_state():
     """
-    gets the state of adb server if state is device adb is connected
+    gets the state of adb server if state is device then phone is connected
     """
 
-    if ADB_OVERIDE == 1:
-        return True
-    cmd = './adb get-state'
+    if os_platform == 'osx':
+        cmd = './adb get-state'
+    elif os_platform == 'win':
+        cmd = 'adb.exe get-state'
+
     output = os.popen(cmd)  # command to run
     res = output.readlines()  # res: output from running cmd
     state = output.close()
@@ -233,27 +235,20 @@ def adb_state():
         else:
             return False
 
-    print "force install"
-
-def unistall_apk(apkName):  # to do
-    """
-    unistalls an apk
-    :param apkName: app to remove
-    :return: None
-    """
-    print "Unistall apk"
-
-
 
 def adb_install(source_path):
     """
     Install package to android device
     :param source_path: local path of the app
-    :return: None
+    :return:
     """
-    # -d is to allow downgrade an apk
-    # -r is to reinstall existing app
-    cmd = './adb install -d -r ' + str(source_path)
+
+    # -d is to allow downgrade of apk
+    # -r is to reinstall existing apk
+    if os_platform == 'osx':
+        cmd = './adb install -d -r ' + str(source_path)
+    elif os_platform == 'win':
+        cmd = 'adb.exe install -d -r ' + str(source_path)
     print('Installing ' + str(source_path))
 
     state = subprocess.check_output(cmd, shell=True)
@@ -261,53 +256,13 @@ def adb_install(source_path):
     # get the last line from the stdout usually adb produces a lot lines of output
     if state_strings[-1] == "Success":  # apk installed
         return INSTALL_OK
-    # when here means something stange is happening
-    if (state_strings[-1].split()[1] in "[INSTALL_FAILED_ALREADY_EXISTS]") & INSTALL_FORCE == True:
-        print "Force Install"  # not used implemented in with -r flags above
 
+    # when here, means something strange is happening
     if "Failure" in state_strings[-1]:
         if "[INSTALL_FAILED_ALREADY_EXISTS]" in state_strings[-1]:  # apk already exists
             return INSTALL_EXISTS
         else:
             return INSTALL_FAILURE  # general failure
-
-
-
-def adb_install_sys(source_path):
-    """
-    install apk in system partition
-    :param source_path:
-    :return:
-    """
-
-    cmd = "adb push " + str(source_path) + " /system/app"
-    print("Installing " + str(source_path))
-    state = os.system(cmd)  # execute command to terminal
-    if state:
-        print ('%s: running %s failed' % (sys.argv[0], cmd))
-        return -1
-    else:
-        return 0
-
-def adb_perm():
-    """
-    modify permission on /system partition
-    :return: None
-    """
-    cmd0 = "./adb remount"  # mount as read write command
-    cmd = "./adb shell chmod 777 /system"  # change permissions
-
-    print("Mount /system as read-write partition...")
-    state = os.system(cmd0)  # execute command to terminal
-    if state:
-        print ('%s: running %s failed' % (sys.argv[0], cmd0))
-        sys.exit(1)
-
-    print("Change /system permissions...")
-    state = os.system(cmd)  # execute command to terminal
-    if state:
-        print ('%s: running %s failed' % (sys.argv[0], cmd))
-        sys.exit(1)
 
 
 def rename_fix(old_name_list, apk_path):
@@ -318,14 +273,15 @@ def rename_fix(old_name_list, apk_path):
     :return:
     """
     new_name_list = []
-    for index in range(len(old_name_list)):
+    n = len(old_name_list)
+    for index in range(n):
         if old_name_list[index].find(' '):
             new_name_list.append(old_name_list[index].replace(' ', '_'))
             print("Fixing name: " + str(old_name_list[index]) + " -> " + str(new_name_list[index]))
         else:
             new_name_list.append(old_name_list[index])
     # rename files
-    for index in range(len(old_name_list)):
+    for index in range(n):
         os.rename(apk_path + os.sep + old_name_list[index], apk_path + os.sep + new_name_list[index])
     return new_name_list
 
@@ -344,7 +300,7 @@ def curr_dir_fix():
 
 def start_up_msg():
     print('Apk Mass install Utility \nVersion: 2.0\n')
-    print('Author: Evagelos Murutsos\nContact: mvaggelis@gmail.com')
+    print('Author: Evaggelos Mouroutsos\nContact: mvaggelis@gmail.com')
 
 
 def main():
@@ -365,6 +321,14 @@ def main():
 
     args = vars(parser.parse_args())
 
+    # detect platform OSX, WIN , LINUX
+    if os.name == 'posix' and system() == 'Darwin':
+        os_platform = 'osx'
+    elif os.name == 'posix' and system() == 'Linux':
+        os_platform = 'linux'
+    else:
+        os_platform = 'win'
+
     # kill any instance of adb before starting
     adb_kill()
 
@@ -381,17 +345,19 @@ def main():
                 os.mkdir("backup/")
         print "Starting back up process..."
         print "Listing installed apk's in device...",
-        device_packages = package_managment(PKG_APP)  # get installed packages
+        pkgs = package_managment(pkg_flags['user'])  # get user installed packages
+
         pkg_path = []
-        for i in device_packages:  # get full path on the android filesystem for each package
+        for i in pkgs:  # get full path on the android filesystem for each package
             pkg_path.append(get_package_full_path(i))
 
         print "OK"
         # pkgStruct = dict(zip(device_packages, pkg_path))
         p = []  # list with dictionaries
-        for i in range(0, len(device_packages)):
-            p.append({device_packages[i]: pkg_path[i]})
-            print "\t" + device_packages[i] + ":" + pkg_path[i]
+        n = len(pkgs)
+        for i in range(0, n):
+            p.append({pkgs[i]: pkg_path[i]})
+            print "\t" + pkgs[i] + ":" + pkg_path[i]
         print
         app_no = len(p)
         print "Found {0} installed packages".format(app_no)
@@ -407,7 +373,7 @@ def main():
 
         progress = 1
         for i in p:  # i is dict {package name: package path}
-            print "[{}/{}]...".format(progress, app_no) + " " + i[i.keys()[0]]
+            print "[{}/{}]...pulling".format(progress, app_no) + " " + i[i.keys()[0]]
             pull_apk(i)
             apk_info = get_apk_version(i.keys()[0] + ".apk")
             # print apk_info
@@ -454,29 +420,24 @@ def main():
         # make the source and target paths good
         apk_path = os.path.abspath(raw_apk_path)
 
-        # extension for apk's
-        extension = ".apk"
-
         # change the current directory to adb path directory and start a server
         adb_start()
 
-        # wait for 2 seconds
         print("Wait for 2 seconds...")
         time.sleep(2)
 
         # get the state of adb server
-        if D_INSTALL != 1:
-            if adb_state() == False:
-                print("Adb Server isn\'t running or phone isn'\t connected !")
-                time.sleep(2)
-                sys.exit(1)
-            else:
-                print('Device Mode, phone is connected')
+        if adb_state():
+            print('Device Mode, phone is connected')
+        else:
+            print("Adb Server isn\'t running or phone isn'\t connected !")
+            time.sleep(2)
+            sys.exit(1)
 
         file_list = os.listdir(apk_path)  # list all files in apk directory
         list_of_apk = []  # list holds the apk found in directory
         for file in file_list:
-            if file.endswith(extension):  # seperate the apk file by extension in an other list
+            if file.endswith(".apk"):  # separate the apk file by extension in an other list
                 list_of_apk.append(file)
         # list holds the size of each apk file
         list_of_size = []
@@ -494,31 +455,21 @@ def main():
         print('----------')
         for index in range(len(fixed_name_list)):
             print("Apk: " + fixed_name_list[index] + " Size: %0.2f mb" % (
-            int(list_of_size[index]) / (1024 * 1024)))  # print the name of the apk and the size of it
+                int(list_of_size[index]) / (1024 * 1024)))  # print the name of the apk and the size of it
         print('----------')
 
-        # find the total size of installation
-        sum = 0
-        for size in list_of_size:
-            sum = sum + int(size)
-        sumUp = sum / (1024 * 1024)  # convert bytes to mb
-
-        print('Total Installation Size: %0.2f mb' % (sumUp))
+        # convert bytes to mb
+        print('Total Installation Size: %0.2f mb' % (sum(list_of_size) / (1024 * 1024)))
         print('----------')
 
         # wait for 2 seconds
         time.sleep(1)
 
-        # if mode == 'system':
-        #    adb_perm()
         install_state = []
         apkinstalling = 1
         print('Installing apk\'s')
         for apkinstall in fixed_name_list:
             print("Installing %d... %d" % (apkinstalling, len(fixed_name_list)))
-            # if mode == 'system':
-            #       install_state.append( instinstadb_install_sys(apk_path+'\\'+apkinstall))
-            # else:
             install_state.append(adb_install(apk_path + os.sep + apkinstall))
         print("\n\nInstallation Completed !!!")
         print "Summary: ",
