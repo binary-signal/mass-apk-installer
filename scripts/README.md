@@ -1,5 +1,6 @@
-Scripts are available for OSX and Windows.
-Scirpts help run the app without out giving 
+# about scripts
+There are scripts  available for OSX and Windows currently.
+Scirpts will help you  run the app without out giving 
 command line arguments
 
 Full list of command line arguments available
