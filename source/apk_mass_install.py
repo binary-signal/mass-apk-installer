@@ -442,7 +442,7 @@ def main():
         for apk in fixed_name_list:
             progress += 1
             print("[{:3d}/{:3d}] Installing {} ...".format(progress, len(fixed_name_list), apk))
-            s = adb_install(apk_path + os.sep + apkinstall)
+            s = adb_install(apk_path + os.sep + apk)
             install_state.append(s)
 
         summary(install_state)
