@@ -1,11 +1,10 @@
 # mass-apk-installer
 
 Read me file for apk install 
-Last Update 2/4/2017
+Last Update 12/02/2018
 
 # Table of contents:
 
-	
 0x0: Support Information<br>
 0x1: Software Description<br>
 0x2: How to use this software<br>
@@ -26,10 +25,25 @@ This software automates the installation and back up of APK's, Android applicati
 install python depedencies py3-progressbar and pycrypto you can do that by open a terminal and type the following command
 pip install -r depedencies.txt
 ## 0x2: How to use this software
-	in unix
-	$./mass-apk-installer -b 
 
-	To do...
+	# back up to folder created automaticaly
+	$python3 mass-apk-installer.py -b
+	
+	# back up to a zip file created automaticaly 
+	$python3 mass-apk-installer.py -b -a
+	
+	# back up to encrypted zp file created automaticaly
+	$python3 mass-apk-installer.py -b -a -e
+	
+	#restore from folder 
+	$python3 mass-apk-installer.py -i 2018-02-12_04-47-25
+	
+	#restore from zip file
+	$python3 mass-apk-installer.py -i2018-02-12_04-47-25.zip
+	
+	#restore from encrypted zip file
+	$python3 mass-apk-installer.py -i2018-02-12_04-47-25.aes
+	
 
 ## 0x3: Command Line Arguemnts
 
