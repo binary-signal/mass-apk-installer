@@ -49,8 +49,7 @@ pip install -r depedencies.txt
 
 	Full list of command line arguments available
 	    -b, --backup  | Perform device back up
-    	    -i, --install | Restore back up to device from path. Path can be a folder, 
-	    zip file or encrypted archive
+    	    -i, --install | Restore back up to device from path. Path can be a folder, zip file or encrypted archive
    	    -a, --archive | Create  zip archive after back up, used with -b flag
             -e, --encrypt | Encrypt  zip archive after backup used with -b -a flags
 	    -v, --verbose | Print verbose messages during execution
