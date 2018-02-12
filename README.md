@@ -19,26 +19,32 @@ You can sent requests, bugs and anything you want at: mvaggelis@gmail.com
     http://forum.xda-developers.com/showthread.php?t=1310742
 
 ## 0x1: Software Description
-This software automates the installation and backing up of apk's, Android applications to your Android phone. It 
-    uses the adb interface provided by Google to install application via command line prompt to the 
-    phone. 
+This software automates the installation and back up of APK's, Android applications to your Android phone. It 
+    uses the adb interface provided by Google to install apk's via command line prompt to the phone. 
 
+## 0x2 First
+install python depedencies py3-progressbar and pycrypto you can do that by open a terminal and type the following command
+pip install -r depedencies.txt
 ## 0x2: How to use this software
+	in unix
+	$./mass-apk-installer -b 
 
 	To do...
 
 ## 0x3: Command Line Arguemnts
 
-
 	Full list of command line arguments available
-	-m', '--mode', help='mode can be install or backup ' 
-	-s', '--source', help='source folder' 
-	-d', '--destination', help='destination folder ' 
-	-a', '--archive', help='make a zip archive from backup' 
-	-e', '--encryption', help='encrypt archive with AES' 
-	-v', '--verbose', help='Print verbose messages during execution' 
+	    -b, --backup  | Perform device back up
+    	    -i, --install | Restore back up to device from path. Path can be a folder, zip file or encrypted archive
+   	    -a, --archive | Create  zip archive after back up, used with -b flag
+            -e, --encrypt | Encrypt  zip archive after backup used with -b -a flags
+	    -v, --verbose | Print verbose messages during execution
+
 
 ## 0x4: Change Log
+### v 3.0 Major Update
+Now mass-apk-installer is using python version 3, bug fixes in encryption 
+
 ### v 2.2 Cleaned code, added support for android nougat
 
 ### v 2.0 New features
