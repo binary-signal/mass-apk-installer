@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+echo 'mass apk installer v3.0'
+
 # restore from zip file
 ./apk_mass_install -i archive.zip
 
