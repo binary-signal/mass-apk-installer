@@ -22,8 +22,11 @@ This software automates the installation and back up of APK's, Android applicati
     uses the adb interface provided by Google to install apk's via command line prompt to the phone. 
 
 ## 0x2 First
-install python depedencies py3-progressbar and pycrypto you can do that by open a terminal and type the following command
+You will need to have python 3 to run this software.
+Also in odrer to use mass-apk-installer you have to install two python depedencies py3-progressbar and pycrypto you can do that by opening a terminal and typing the following command
+
 pip install -r depedencies.txt
+
 ## 0x2: How to use this software
 
 	# back up to folder created automaticaly
@@ -48,10 +51,15 @@ pip install -r depedencies.txt
 ## 0x3: Command Line Arguemnts
 
 	Full list of command line arguments available
+	
 	    -b, --backup  | Perform device back up
+	    
     	    -i, --install | Restore back up to device from path. Path can be a folder, zip file or encrypted archive
+	    
    	    -a, --archive | Create  zip archive after back up, used with -b flag
-            -e, --encrypt | Encrypt  zip archive after backup used with -b -a flags
+            
+	    -e, --encrypt | Encrypt  zip archive after backup used with -b -a flags
+	    
 	    -v, --verbose | Print verbose messages during execution
 
 
