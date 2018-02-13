@@ -49,8 +49,8 @@ import shutil
 import sys
 import os
 
-from archive import extract_zip, make_zip
-from encryption import AesEncryption
+from tools.archive import extract_zip, make_zip
+from tools.encryption import AesEncryption
 
 INSTALL_FAILURE = -1
 INSTALL_OK = 1
