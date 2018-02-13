@@ -42,10 +42,10 @@ pip install -r depedencies.txt
 	$python3 mass-apk-installer.py -i 2018-02-12_04-47-25
 	
 	#restore from zip file
-	$python3 mass-apk-installer.py -i2018-02-12_04-47-25.zip
+	$python3 mass-apk-installer.py -i 2018-02-12_04-47-25.zip
 	
 	#restore from encrypted zip file
-	$python3 mass-apk-installer.py -i2018-02-12_04-47-25.aes
+	$python3 mass-apk-installer.py -i 2018-02-12_04-47-25.aes
 	
 
 ## 0x3: Command Line Arguemnts
