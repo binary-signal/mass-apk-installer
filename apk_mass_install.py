@@ -57,19 +57,19 @@ INSTALL_OK = 1
 INSTALL_EXISTS = 2
 
 # Flags used for adb package listing
-pkg_flags = {'all': "",  # list all packages
-             'user': "-3",  # list 3d party packages only (default)
-             'system': "-S"}  # list system packages only
+pkg_flags = {"all": "",  # list all packages
+             "user": "-3",  # list 3d party packages only (default)
+             "system": "-S"}  # list system packages only
 
 
 def detect_os():
     # detect platform
-    if os.name == 'posix' and system() == 'Darwin':
-        os_platform = 'osx'
-    elif os.name == 'posix' and system() == 'Linux':
-        os_platform = 'linux'
-    elif os.name == 'win':
-        os_platform = 'win'
+    if os.name == "posix" and system() == "Darwin":
+        os_platform = "osx"
+    elif os.name == "posix" and system() == "Linux":
+        os_platform = "linux"
+    elif os.name == "win":
+        os_platform = "win"
     else:
         raise ValueError("Unsupported OS")
 
@@ -82,43 +82,35 @@ os_platform = detect_os()
 def pull_apk(pkg_dic):
     """
     Pulls apk specified in pkgDic variable from android device using adb
-    renames extracted apk to filename specified in pkgDic key value pair
-    pkgDic is an one value dictionary.
-    :param pkg_dic: {package name : package path}
-    :return: None
+    renames extracted apk to filename specified in pkgDic key value pair.
     """
 
     pkg_name = list(pkg_dic)
 
-    if os_platform == 'osx':
-        cmd = './adb_osx/adb shell cat {} > base.apk'.format(pkg_dic[pkg_name[0]])
+    if os_platform is "osx":
+        cmd = "./adb_osx/adb shell cat {} > base.apk".format(pkg_dic[pkg_name[0]])
         # cmd = "./adb_osx/adb pull " + pkgDic[pkg_name[0]] doesn't work anymore after nougat update
-    elif os_platform == 'win':
+    elif os_platform is "win":
         cmd = "adb_win/adb.exe pull {}".format(pkg_dic[pkg_name[0]])
+    elif os_platform is "linux":
+        cmd = "./adb_linux/adb shell cat {} > base.apk".format(pkg_dic[pkg_name[0]])
 
-    state = subprocess.check_output(cmd, shell=True)
-
-    if os.path.exists("base.apk"):
-        if os.path.isfile("base.apk"):
-            os.rename("base.apk", pkg_name[0] + ".apk")
+    exit_code, output = subprocess.getstatusoutput(cmd)
+    if exit_code == 0:
+        if os.path.exists("base.apk"):
+            if os.path.isfile("base.apk"):
+                os.rename("base.apk", pkg_name[0] + ".apk")
 
 
 def package_management(PKG_FILTER):
     """
     list all packages installed installed in android device. Results can be
-    filtered with PKG_FILTER to get only apk packages you are interested. By default
-    listing only 3d party apps.
-    :param PKG_FILTER:
-    :return:
+    filtered with PKG_FILTER to get only apk packages you are interested. By
+    default listing only 3d party apps.
     """
 
-    if os_platform == 'osx':
-        cmd = "./adb_osx/adb shell pm list packages {}".format(PKG_FILTER)
-    elif os_platform == 'win':
-        cmd = "/adb_win/adb.exe shell pm list packages {}".format(PKG_FILTER)
+    state = adb_command("shell pm list packages {}".format(PKG_FILTER))
 
-    state = subprocess.check_output(cmd, shell=True)
-    pkg_raw = state.splitlines()
     pkg = []
 
     """
@@ -126,11 +118,9 @@ def package_management(PKG_FILTER):
     package:com.skype.raider
     we need to strip package: prefix
     """
-    for i in pkg_raw:
-        # convert binary string to string
-        i = i.decode('ascii', 'ignore')
+    for i in state.splitlines():
         if i.startswith("package:"):
-            y = [x.strip() for x in i.split(':')]
+            y = [x.strip() for x in i.split(":")]
             pkg.append(y[1])
 
     return pkg
@@ -139,16 +129,9 @@ def package_management(PKG_FILTER):
 def get_package_full_path(pkg_name):
     """
      Returns full path of package in android device storage specified by argument
-    :param pkg_name:
-    :return:
     """
-    if os_platform == 'osx':
-        cmd = "./adb_osx/adb shell pm path {}".format(pkg_name)
-    elif os_platform == 'win':
-        cmd = "adb/win/adb.exe shell pm path {}".format(pkg_name)
 
-    state = subprocess.check_output(cmd, shell=True)
-    state = state.decode('ascii', 'ignore')
+    state = adb_command("shell pm path {}".format(pkg_name))
 
     """
     adb returns packages name  in the form
@@ -156,7 +139,7 @@ def get_package_full_path(pkg_name):
      we need to strip package: prefix in returned string
     """
 
-    pkg_path = [x.strip() for x in state.split(':')]
+    pkg_path = [x.strip() for x in state.split(":")]
     return pkg_path[1]
 
 
@@ -164,52 +147,45 @@ def adb_start():
     """
     starts an instance of adb server
     """
-    if os_platform == 'osx':
-        cmd = './adb_osx/adb start-server'  # command to adb
-    elif os_platform == 'win':
-        cmd = 'adb_win/adb.exe start-server'  # command to adb
-    state = os.system(cmd)  # execute the command in terminal
-    if state:
-        print('{}: running {} failed'.format(sys.argv[0], cmd))
-        sys.exit(1)
-    print('Make sure your Android phone is connected and debug mode is enabled !')
+    adb_command("start-server")
 
 
 def adb_kill():
     """
     kills adb server
     """
-    if os_platform == 'osx':
-        cmd = './adb_osx/adb kill-server'  # command to adb
-    elif os_platform == 'win':
-        cmd = 'adb_win/adb.exe kill-server'  # command to adb
-    state = os.system(cmd)  # execute command to terminal
-    if state:
-        print('{}: running {} failed'.format(sys.argv[0], cmd))
-        sys.exit(1)
+    adb_command("kill-server")   
 
 
 def adb_state():
     """
     gets the state of adb server if state is device then phone is connected
     """
-
-    if os_platform == 'osx':
-        cmd = './adb_osx/adb get-state'
-    elif os_platform == 'win':
-        cmd = 'adb_win/adb.exe get-state'
-
-    proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = proc.communicate()
-
-    state = (out + err)
-    state = state.decode('ascii', 'ignore')
+    state = adb_command("get-state")
 
     if "error" in state:
         return False
 
     return True
 
+
+def adb_command(cmd):
+    if os_platform is "osx":
+        prefix = "./adb_osx/adb "
+    elif os_platform is "win":
+        prefix = "\\adb_osx\\adb.exe "
+    elif os_platform is "linux":
+        prefix = "./adb_linux/adb "
+
+    cmd = prefix + cmd
+
+    exit_code, output = subprocess.getstatusoutput(cmd)
+    if exit_code == 0:
+        return output
+    else:
+        raise ValueError("Exit code not 0, an error occurred\n{}".format(output))
+
+       
 
 def adb_install(source_path):
     """
@@ -218,30 +194,17 @@ def adb_install(source_path):
 
     # -d is to allow downgrade of apk
     # -r is to reinstall existing apk
-    if os_platform == 'osx':
-        cmd = './adb_osx/adb install -d  -r {}'.format(source_path)
-    elif os_platform == 'win':
-        cmd = 'adb_win/adb.exe install -d -r {}'.format(source_path)
-
-    proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = proc.communicate()
-
-    state = (out + err)
-
-    state = state.decode('ascii', 'ignore')
+    state = adb_command("install -d  -r {}".format(source_path))
 
     if "Success" in state:  # apk installed
         return INSTALL_OK
 
     # when here, means something strange is happening
     if "Failure" or "Failed" in state:
-        # if "INSTALL_FAILED_ALREADY_EXISTS" in state:  # apk already exists
-        #   return INSTALL_EXISTS
-
         return INSTALL_FAILURE
 
 
-def rename_fix2(path):
+def rename_fix(path):
     """
     apply  rename fix to files inside folder path,
     replace space character with  underscore
@@ -251,8 +214,8 @@ def rename_fix2(path):
 
         new_files = []
         for file in files:
-            if ' ' in file:
-                new_files.append(file.replace(' ', '_'))
+            if " " in file:
+                new_files.append(file.replace(" ", "_"))
             else:
                 new_files.append(file)
 
@@ -282,38 +245,35 @@ def human_time(start, end):
 
 def parse_args():
     # parse arguments
-    parser = argparse.ArgumentParser(description='Simple Backup / Restore  of Android apps')
-    parser.add_argument('-b', '--backup', help='perform device back up', action='store_true')
-    parser.add_argument('-i', '--install', type=str,
-                        help='restore back up to device from path. Path can be a folder, zip file or encrypted archive',
+    parser = argparse.ArgumentParser(description="Simple Backup / Restore  of Android apps")
+    parser.add_argument("-b", "--backup", help="perform device back up", action="store_true")
+    parser.add_argument("-i", "--install", type=str,
+                        help="restore back up to device from path. Path can be a folder, zip file or encrypted archive",
                         required=False)
-    parser.add_argument('-a', '--archive', help='create  zip archive after back up, used with -b flag',
-                        action='store_true')
-    parser.add_argument('-e', '--encrypt', help='encrypt  zip archive after backup used with -b -a flags',
-                        action='store_true')
+    parser.add_argument("-a", "--archive", help="create  zip archive after back up, used with -b flag",
+                        action="store_true")
+    parser.add_argument("-e", "--encrypt", help="encrypt  zip archive after backup used with -b -a flags",
+                        action="store_true")
 
     args = parser.parse_args()
     return args.backup, args.install, args.archive, args.encrypt
 
 
 def summary(install_state):
-    # check install state and report failures
-    print("\n\nSummary: ")
     success = 0
     fail = 0
-    not_changed = 0
+
+    print("\n\nSummary: ")
     for s in install_state:
         if s == INSTALL_FAILURE:
             fail = fail + 1
-        elif s == INSTALL_EXISTS:
-            not_changed = not_changed + 1
         elif s == INSTALL_OK:
             success = success + 1
-    print("Installed:{} | Not Changed:{} | Failed:{}".format(success, not_changed, fail))
+    print("Installed:{} |  Failed:{}".format(success, fail))
 
 
 def main():
-    print('Apk Mass Installer Utility \nVersion: 3.0\n')
+    print("Apk Mass Installer Utility \nVersion: 3.0\n")
 
     if len(sys.argv) <= 1:
         print("usage: apk_mass_install.py [-h] [-b] [-i INSTALL] [-a] [-e]")
@@ -322,7 +282,7 @@ def main():
     backup, install, archive, encrypt = parse_args()
 
     adb_kill()  # kill any instances of adb before starting if any
-   
+
     if not adb_state():
         print("No phone connected via USB")
         sys.exit(-1)
@@ -333,8 +293,8 @@ def main():
     t_start = timer()
 
     if backup:
-        # generate filename from current time
-        backup_file = str(datetime.utcnow()).split('.')[0].replace(' ', '_').replace(':', '-')
+        # generate filename from current date time
+        backup_file = str(datetime.utcnow()).split(".")[0].replace(" ", "_").replace(":", "-")
         if not os.path.exists(backup_file):
             os.mkdir(backup_file)
         else:
@@ -342,7 +302,7 @@ def main():
             sys.exit(-1)
 
         print("Listing installed apk's in device...\n")
-        pkgs = package_management(pkg_flags['user'])  # get user installed packages
+        pkgs = package_management(pkg_flags["user"])  # get user installed packages
 
         num_apk = len(pkgs)
 
@@ -360,10 +320,11 @@ def main():
 
         print("\nFound {} installed packages\n".format(num_apk))
 
+        space = len(str(num_apk))  # calculate space for progress bar
         progress = 0
         for i in p:  # i is dict {package name: package path}
             progress += 1
-            print("[{:3d}/{:3d}]  pulling ... {}".format(progress, num_apk, i[list(i)[0]]))
+            print("[{0:{space}d}/{1:{space}d}] pulling ... {2}".format(progress, num_apk, i[list(i)[0]], space=space))
             pull_apk(i)  # get apk from device
 
             shutil.move(list(i)[0] + ".apk",  # move apk to back up directory
@@ -378,7 +339,7 @@ def main():
         if encrypt:
             key = input("Enter password for encryption:")
             a = AesEncryption(key)
-            print('\nEncrypting archive {} this may take a while...'.format(backup_file + ".zip"))
+            print("\nEncrypting archive {} this may take a while...".format(backup_file + ".zip"))
             a.encrypt(backup_file + ".zip", backup_file + ".aes")
 
             if os.path.exists(backup_file + ".zip"):
@@ -398,18 +359,18 @@ def main():
             elif os.path.isfile(install):  # install from file
                 filename, file_extension = os.path.splitext(install)
 
-                if file_extension == '.zip':  # install from zip archive
+                if file_extension == ".zip":  # install from zip archive
                     print("\nRestoring back up from zip file: {}".format(install))
                     print("\nUnzipping {} ...".format(install))
                     extract_zip(install, filename)
                     apk_path = filename
                     clean_up.append(filename)
 
-                elif file_extension == '.aes':  # install from encrypted archive
+                elif file_extension == ".aes":  # install from encrypted archive
                     print("\nRestoring back up from encrypted archive: {}".format(install))
                     key = input("Enter password for decryption:")
                     a = AesEncryption(key)
-                    print('\nDecrypting back up {} this may take a while...'.format(install))
+                    print("\nDecrypting back up {} this may take a while...".format(install))
                     a.decrypt(install, filename + ".zip")
                     print("Unzipping archive this may take also a while...")
                     extract_zip(filename + ".zip", filename)
@@ -422,8 +383,7 @@ def main():
             sys.exit(-1)
 
         try:
-
-            rename_fix2(apk_path)
+            rename_fix(apk_path)
             apks = get_apks(apk_path)
         except NotADirectoryError:
             print("isn't a dir {}".format(apk_path))
@@ -434,8 +394,8 @@ def main():
         for file in apks:
             size.append(os.path.getsize(os.path.join(apk_path, file)))
 
-        print('\nTotal Installation Size: {0:.2f} MB'.format(sum(size) / (1024 * 1024)))
-        print('-' * 10)
+        print("\nTotal Installation Size: {0:.2f} MB".format(sum(size) / (1024 * 1024)))
+        print("-" * 10)
 
         state = []
         progress = 0
@@ -468,7 +428,7 @@ def main():
     adb_kill()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
