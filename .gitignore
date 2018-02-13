@@ -88,9 +88,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
-.idea/workspace.xml
-.idea/emacs.xml
-.idea/mass.iml
-.idea/modules.xml
-.idea/vcs.xml
+**/.idea/workspace.xml
+**/.idea/emacs.xml
+**/.idea/mass.iml
+**/.idea/modules.xml
+**/.idea/vcs.xml
 .DS_Store
