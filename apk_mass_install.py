@@ -52,8 +52,6 @@ import os
 from tools.archive import extract_zip, make_zip
 from tools.encryption import AesEncryption
 
-import progressbar as pb
-
 INSTALL_FAILURE = -1
 INSTALL_OK = 1
 INSTALL_EXISTS = 2
@@ -100,8 +98,9 @@ def pull_apk(pkg_dic):
 
     state = subprocess.check_output(cmd, shell=True)
 
-    if os.path.isfile("base.apk"):
-        os.rename("base.apk", pkg_name[0] + ".apk")
+    if os.path.exists("base.apk"):
+        if os.path.isfile("base.apk"):
+            os.rename("base.apk", pkg_name[0] + ".apk")
 
 
 def package_management(PKG_FILTER):
@@ -200,17 +199,16 @@ def adb_state():
     elif os_platform == 'win':
         cmd = 'adb_win/adb.exe get-state'
 
-    output = os.popen(cmd)  # command to run
-    res = output.readlines()  # res: output from running cmd
-    state = output.close()
-    if state:
-        print('{}: running {} failed'.format(sys.argv[0], cmd))
-        sys.exit(1)
-    for line in res:
-        if str.rstrip(line) == "device":  # found a connected device
-            return True
-        else:
-            return False
+    proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+
+    state = (out + err)
+    state = state.decode('ascii', 'ignore')
+
+    if "error" in state:
+        return False
+
+    return True
 
 
 def adb_install(source_path):
@@ -230,32 +228,6 @@ def adb_install(source_path):
 
     state = (out + err)
 
-    state = state.decode('ascii', 'ignore')
-
-    if "Success" in state:  # apk installed
-        return INSTALL_OK
-
-    # when here, means something strange is happening
-    if "Failure" or "Failed" in state:
-        # if "INSTALL_FAILED_ALREADY_EXISTS" in state:  # apk already exists
-        #   return INSTALL_EXISTS
-
-        return INSTALL_FAILURE
-
-
-def adb_install_back_up(source_path):
-    """
-    Install package to android device
-    """
-
-    # -d is to allow downgrade of apk
-    # -r is to reinstall existing apk
-    if os_platform == 'osx':
-        cmd = './adb_osx/adb install -d -r {}'.format(source_path)
-    elif os_platform == 'win':
-        cmd = 'adb_win/adb.exe install -d -r {}'.format(source_path)
-
-    state = subprocess.check_output(cmd, shell=True)
     state = state.decode('ascii', 'ignore')
 
     if "Success" in state:  # apk installed
@@ -350,6 +322,11 @@ def main():
     backup, install, archive, encrypt = parse_args()
 
     adb_kill()  # kill any instances of adb before starting if any
+   
+    if not adb_state():
+        print("No phone connected via USB")
+        sys.exit(-1)
+
     print("Starting adb server...")
     adb_start()  # start an instance of adb server
 
