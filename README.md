@@ -49,18 +49,11 @@ pip install -r depedencies.txt
 	
 
 ## 0x3: Command Line Arguemnts
-
-	Full list of command line arguments available
-	
-	    -b, --backup  | Perform device back up
-	    
-    	    -i, --install | Restore back up to device from path. Path can be a folder, zip file or encrypted archive
-	    
-   	    -a, --archive | Create  zip archive after back up, used with -b flag
-            
-	    -e, --encrypt | Encrypt  zip archive after backup used with -b -a flags
-	    
-	    -v, --verbose | Print verbose messages during execution
+    -b, --backup  | Perform device back up
+    -i, --install | Restore back up to device from path. Path can be a folder, zip file or encrypted archive   
+    -a, --archive | Create  zip archive after back up, used with -b flag
+    -e, --encrypt | Encrypt  zip archive after backup used with -b -a flags
+    -v, --verbose | Print verbose messages during execution
 
 
 ## 0x4: Change Log

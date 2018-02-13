@@ -52,6 +52,8 @@ import os
 from tools.archive import extract_zip, make_zip
 from tools.encryption import AesEncryption
 
+import progressbar as pb
+
 INSTALL_FAILURE = -1
 INSTALL_OK = 1
 INSTALL_EXISTS = 2
@@ -163,8 +165,6 @@ def adb_start():
     """
     starts an instance of adb server
     """
-
-    print('Starting adb server...')
     if os_platform == 'osx':
         cmd = './adb_osx/adb start-server'  # command to adb
     elif os_platform == 'win':
@@ -180,8 +180,6 @@ def adb_kill():
     """
     kills adb server
     """
-
-    print('Killing adb server...')
     if os_platform == 'osx':
         cmd = './adb_osx/adb kill-server'  # command to adb
     elif os_platform == 'win':
@@ -218,8 +216,36 @@ def adb_state():
 def adb_install(source_path):
     """
     Install package to android device
-    :param source_path: local path of the app
-    :return:
+    """
+
+    # -d is to allow downgrade of apk
+    # -r is to reinstall existing apk
+    if os_platform == 'osx':
+        cmd = './adb_osx/adb install -d  -r {}'.format(source_path)
+    elif os_platform == 'win':
+        cmd = 'adb_win/adb.exe install -d -r {}'.format(source_path)
+
+    proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+
+    state = (out + err)
+
+    state = state.decode('ascii', 'ignore')
+
+    if "Success" in state:  # apk installed
+        return INSTALL_OK
+
+    # when here, means something strange is happening
+    if "Failure" or "Failed" in state:
+        # if "INSTALL_FAILED_ALREADY_EXISTS" in state:  # apk already exists
+        #   return INSTALL_EXISTS
+
+        return INSTALL_FAILURE
+
+
+def adb_install_back_up(source_path):
+    """
+    Install package to android device
     """
 
     # -d is to allow downgrade of apk
@@ -228,59 +254,52 @@ def adb_install(source_path):
         cmd = './adb_osx/adb install -d -r {}'.format(source_path)
     elif os_platform == 'win':
         cmd = 'adb_win/adb.exe install -d -r {}'.format(source_path)
-    print('Installing {}'.format(source_path))
 
     state = subprocess.check_output(cmd, shell=True)
-    state_strings = state.splitlines()
+    state = state.decode('ascii', 'ignore')
 
-    # get the last line from the stdout usually adb produces a lot lines of output
-    if state_strings[-1] == "Success":  # apk installed
+    if "Success" in state:  # apk installed
         return INSTALL_OK
 
     # when here, means something strange is happening
-    if "Failure" in state_strings[-1]:
-        if "[INSTALL_FAILED_ALREADY_EXISTS]" in state_strings[-1]:  # apk already exists
-            return INSTALL_EXISTS
-        else:
-            return INSTALL_FAILURE  # general failure
+    if "Failure" or "Failed" in state:
+        # if "INSTALL_FAILED_ALREADY_EXISTS" in state:  # apk already exists
+        #   return INSTALL_EXISTS
+
+        return INSTALL_FAILURE
 
 
-def rename_fix(old_name_list, apk_path):
+def rename_fix2(path):
     """
-    replaces whitespaces from app name with underscores
-    :param old_name_list:
-    :param apk_path:
-    :return:
+    apply  rename fix to files inside folder path,
+    replace space character with  underscore
     """
-    new_name_list = []
-    n = len(old_name_list)
-    for index in range(n):
-        if old_name_list[index].find(' '):
-            new_name_list.append(old_name_list[index].replace(' ', '_'))
-            # print("Fixing name: {} -> {}".format(old_name_list[index], new_name_list[index]))
-        else:
-            new_name_list.append(old_name_list[index])
-    # rename files
-    for index in range(n):
-        os.rename(apk_path + os.sep + old_name_list[index], apk_path + os.sep + new_name_list[index])
-    return new_name_list
+    if os.path.isdir(path):
+        files = get_apks(path)
 
+        new_files = []
+        for file in files:
+            if ' ' in file:
+                new_files.append(file.replace(' ', '_'))
+            else:
+                new_files.append(file)
 
-def curr_dir_fix():
-    """
-    checks if whitespace are in the path
-    :return:
-    """
-    print("Current dir is: {}".format(os.curdir))
-    if os.curdir.find(" ") == -1:
-        print("No need for current directory fix !")
+        for old, new in zip(files, new_files):
+            os.rename(os.path.join(path, old), os.path.join(path, new))
     else:
-        print("Current directory needs a fix\n")
+        raise NotADirectoryError
 
 
-def start_up_msg():
-    print('Apk Mass install Utility \nVersion: 2.0\n')
-    print('Author: Evangelos Mouroutsos\nContact: mvaggelis@gmail.com\n\n')
+def get_apks(path):
+    if os.path.isdir(path):
+        files = os.listdir(path)  # list all files in apk directory
+        apk = []  # list holds the apk found in directory
+        for file in files:
+            if file.endswith(".apk"):  # separate the apk file by extension in an other list
+                apk.append(file)
+        return apk
+    else:
+        raise NotADirectoryError
 
 
 def human_time(start, end):
@@ -300,33 +319,38 @@ def parse_args():
                         action='store_true')
     parser.add_argument('-e', '--encrypt', help='encrypt  zip archive after backup used with -b -a flags',
                         action='store_true')
-    parser.add_argument('-v', '--verbose', help='Print verbose messages during execution', action='store_true')
 
     args = parser.parse_args()
-    return args.backup, args.install, args.archive, args.encrypt, args.verbose
+    return args.backup, args.install, args.archive, args.encrypt
 
 
 def summary(install_state):
     # check install state and report failures
     print("\n\nSummary: ")
-    success_count = 0
-    fail_count = 0
+    success = 0
+    fail = 0
     not_changed = 0
-    for index in range(len(install_state)):
-        if install_state[index] == INSTALL_FAILURE:
-            fail_count = fail_count + 1
-        elif install_state[index] == INSTALL_EXISTS:
+    for s in install_state:
+        if s == INSTALL_FAILURE:
+            fail = fail + 1
+        elif s == INSTALL_EXISTS:
             not_changed = not_changed + 1
-        elif install_state[index] == INSTALL_OK:
-            success_count = success_count + 1
-    print("Installed: {} | Not Changed:{} | Failed:{}".format(success_count, not_changed, fail_count))
+        elif s == INSTALL_OK:
+            success = success + 1
+    print("Installed:{} | Not Changed:{} | Failed:{}".format(success, not_changed, fail))
 
 
 def main():
-    start_up_msg()
-    backup, install, archive, encrypt, verbose = parse_args()
+    print('Apk Mass Installer Utility \nVersion: 3.0\n')
+
+    if len(sys.argv) <= 1:
+        print("usage: apk_mass_install.py [-h] [-b] [-i INSTALL] [-a] [-e]")
+        sys.exit(0)
+
+    backup, install, archive, encrypt = parse_args()
 
     adb_kill()  # kill any instances of adb before starting if any
+    print("Starting adb server...")
     adb_start()  # start an instance of adb server
 
     t_start = timer()
@@ -337,35 +361,36 @@ def main():
         if not os.path.exists(backup_file):
             os.mkdir(backup_file)
         else:
-            raise ValueError("Folder {} already exists".format(backup_file))
+            print("Back up folder {} already exists".format(backup_file))
+            sys.exit(-1)
 
         print("Listing installed apk's in device...\n")
         pkgs = package_management(pkg_flags['user'])  # get user installed packages
 
+        num_apk = len(pkgs)
+
         # get full path on the android filesystem for each installed package
-        pkg_path = []
+        paths = []
         for i in pkgs:
             path = get_package_full_path(i)
             print("{:40.40} Path: {:60.60}".format(i, path))
-            pkg_path.append(path)
+            paths.append(path)
 
+        # combine apk name and apk path into dictionary object
         p = []  # list with dictionaries
         for i in range(0, len(pkgs)):
-            p.append({pkgs[i]: pkg_path[i]})
+            p.append({pkgs[i]: paths[i]})
 
-        num_apk = len(p)
         print("\nFound {} installed packages\n".format(num_apk))
 
         progress = 0
         for i in p:  # i is dict {package name: package path}
             progress += 1
             print("[{:3d}/{:3d}]  pulling ... {}".format(progress, num_apk, i[list(i)[0]]))
+            pull_apk(i)  # get apk from device
 
-            # get apk from device
-            pull_apk(i)
-
-            # move apk to back up directory
-            shutil.move(list(i)[0] + ".apk", os.path.join(backup_file, list(i)[0] + ".apk"))
+            shutil.move(list(i)[0] + ".apk",  # move apk to back up directory
+                        os.path.join(backup_file, list(i)[0] + ".apk"))
 
         if archive:
             print("\nCreating zip archive: {}.zip".format(backup_file))
@@ -385,20 +410,22 @@ def main():
         print("\nBack up finished")
 
     if install:
-        clean_up = []  # list of file names to delete after operation
+        clean_up = []  # list of files, dirs to delete after install
+
         if os.path.exists(install):
+
             if os.path.isdir(install):  # install from folder
-                print("\nRestoring back from folder: {}".format(install))
+                print("\nRestoring back up from folder: {}".format(install))
                 apk_path = install
+
             elif os.path.isfile(install):  # install from file
                 filename, file_extension = os.path.splitext(install)
+
                 if file_extension == '.zip':  # install from zip archive
-                    print("\nRestoring back up from zip archive: {}".format(install))
+                    print("\nRestoring back up from zip file: {}".format(install))
                     print("\nUnzipping {} ...".format(install))
                     extract_zip(install, filename)
-
                     apk_path = filename
-
                     clean_up.append(filename)
 
                 elif file_extension == '.aes':  # install from encrypted archive
@@ -409,43 +436,41 @@ def main():
                     a.decrypt(install, filename + ".zip")
                     print("Unzipping archive this may take also a while...")
                     extract_zip(filename + ".zip", filename)
-
                     apk_path = filename
-
                     clean_up.append(filename + ".zip")
                     clean_up.append(filename)
+
         else:
-            raise ValueError("File doesn't exist")
+            print("File or folder doesn't exist")
+            sys.exit(-1)
 
-        files = os.listdir(apk_path)  # list all files in apk directory
-        apk = []  # list holds the apk found in directory
-        for file in files:
-            if file.endswith(".apk"):  # separate the apk file by extension in an other list
-                apk.append(file)
+        try:
 
-        # fix apk name replace space character with '_'
-        fixed_name_list = rename_fix(apk, apk_path)
+            rename_fix2(apk_path)
+            apks = get_apks(apk_path)
+        except NotADirectoryError:
+            print("isn't a dir {}".format(apk_path))
+            sys.exit(-1)
 
-        # find total installation size of apk's
+        # calculate total installation size
         size = []
-        for file in fixed_name_list:
-            size.append(  # find file size for each apk
-                os.path.getsize(os.path.join(apk_path, file))
-            )
+        for file in apks:
+            size.append(os.path.getsize(os.path.join(apk_path, file)))
 
         print('\nTotal Installation Size: {0:.2f} MB'.format(sum(size) / (1024 * 1024)))
         print('-' * 10)
 
-        install_state = []
+        state = []
         progress = 0
 
-        for apk in fixed_name_list:
+        space = len(str(len(apks)))  # calculate space for progress bar
+        for apk in apks:
             progress += 1
-            print("[{:3d}/{:3d}] Installing {} ...".format(progress, len(fixed_name_list), apk))
-            s = adb_install(apk_path + os.sep + apk)
-            install_state.append(s)
+            print("[{0:{space}d}/{1:{space}d}] Installing {2}".format(progress, len(apks), str(apk), space=space))
+            s = adb_install(os.path.join(apk_path, apk))
+            state.append(s)
 
-        summary(install_state)
+        summary(state)
 
         try:
             clean_up
@@ -453,10 +478,11 @@ def main():
             pass
         else:
             for f in clean_up:
-                if os.path.isdir(f):
-                    shutil.rmtree(f)
-                elif os.path.isfile(f):
-                    os.remove(f)
+                if os.path.exists(f):
+                    if os.path.isdir(f):
+                        shutil.rmtree(f)
+                    elif os.path.isfile(f):
+                        os.remove(f)
 
         print("\nRestore  finished")
 
