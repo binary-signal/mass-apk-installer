@@ -43,6 +43,7 @@ Purpose:  This module automates back or restoration of multiple apk's, apk is th
 from timeit import default_timer as timer
 from platform import system
 from datetime import datetime
+import time
 import subprocess
 import argparse
 import shutil
@@ -56,24 +57,26 @@ INSTALL_FAILURE = -1
 INSTALL_OK = 1
 INSTALL_EXISTS = 2
 
-# Flags used for adb package listing
+# Flags for adb list packages
 pkg_flags = {"all": "",  # list all packages
              "user": "-3",  # list 3d party packages only (default)
              "system": "-S"}  # list system packages only
 
 
 def detect_os():
-    # detect platform
-    if os.name == "posix" and system() == "Darwin":
-        os_platform = "osx"
-    elif os.name == "posix" and system() == "Linux":
-        os_platform = "linux"
-    elif os.name == "win":
-        os_platform = "win"
+    """
+    Detect running operating system
+    """
+    system_ = system()
+
+    if os.name == "posix" and system_ == "Darwin":
+        return "osx"
+    elif os.name == "posix" and system_ == "Linux":
+        return "linux"
+    elif os.name == "nt" and system_ == "Windows":
+        return "win"
     else:
         raise ValueError("Unsupported OS")
-
-    return os_platform
 
 
 os_platform = detect_os()
@@ -154,14 +157,14 @@ def adb_kill():
     """
     kills adb server
     """
-    adb_command("kill-server")   
+    adb_command("kill-server")
 
 
 def adb_state():
     """
     gets the state of adb server if state is device then phone is connected
     """
-    state = adb_command("get-state")
+    state = adb_command("get-state", ignore_return_code=True)
 
     if "error" in state:
         return False
@@ -169,23 +172,25 @@ def adb_state():
     return True
 
 
-def adb_command(cmd):
+def adb_command(cmd, ignore_return_code=False):
     if os_platform is "osx":
         prefix = "./adb_osx/adb "
     elif os_platform is "win":
-        prefix = "\\adb_osx\\adb.exe "
+        prefix = "adb_win\\adb.exe "
     elif os_platform is "linux":
         prefix = "./adb_linux/adb "
 
     cmd = prefix + cmd
 
     exit_code, output = subprocess.getstatusoutput(cmd)
+    if ignore_return_code:
+        return output
     if exit_code == 0:
         return output
     else:
-        raise ValueError("Exit code not 0, an error occurred\n{}".format(output))
+        print("Exit code {}, an error occurred\n{}".format(exit_code, output))
+        sys.exit(-1)
 
-       
 
 def adb_install(source_path):
     """
@@ -283,9 +288,19 @@ def main():
 
     adb_kill()  # kill any instances of adb before starting if any
 
-    if not adb_state():
-        print("No phone connected via USB")
-        sys.exit(-1)
+    tries = 0
+    while True:
+        if adb_state():
+            break
+        else:
+            print("No phone connected waiting to connect phone")
+
+            tries += 1
+            if tries == 3:
+                print("\nFine i give up bye bye")
+                sys.exit(-1)
+
+            time.sleep(3)
 
     print("Starting adb server...")
     adb_start()  # start an instance of adb server
