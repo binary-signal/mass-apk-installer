@@ -33,7 +33,7 @@ Also you can you download precompiled binaries for Windows, Linux, MacOS from [h
 
 ## 0x3: Use cases 
 
-## For python
+## For python (All OS's supported)
 
 	# back up to folder created automaticaly
 	$python3 mass-apk-installer.py -b
