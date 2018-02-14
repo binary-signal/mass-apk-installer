@@ -7,9 +7,10 @@ Last Update 12/02/2018
 
 0x0: Support Information<br>
 0x1: Software Description<br>
-0x2: How to use this software<br>
-0x3: Command Line Arguments<br>
-0x4: Change Log<br>
+0x2: How to run the software<br>
+0x3: Use cases <br>
+0x4: Command Line Arguments<br>
+0x5: Change Log<br>
 
 
 ## 0x0: Support Information
