@@ -8,13 +8,13 @@ Purpose:  This module automates back or restoration of multiple apk's, apk is th
 
 
 
- Author:      Evangelos Mouroutsos
+ Author:      Evan
 
  Created:     19/10/2011
  Last Modified: 12/02/2018
- Copyright:   (c) Evangelos Mouroutsos 2018
+ Copyright:   (c) Evan 2018
  Licence:
- Copyright (c) 2018, Evangelos Mouroutsos
+ Copyright (c) 2018, Evan
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -352,13 +352,16 @@ def main():
                 shutil.rmtree(backup_file)
 
         if encrypt:
-            key = input("Enter password for encryption:")
-            a = AesEncryption(key)
-            print("\nEncrypting archive {} this may take a while...".format(backup_file + ".zip"))
-            a.encrypt(backup_file + ".zip", backup_file + ".aes")
+            if os_platform is not "win":
+                key = input("Enter password for encryption:")
+                a = AesEncryption(key)
+                print("\nEncrypting archive {} this may take a while...".format(backup_file + ".zip"))
+                a.encrypt(backup_file + ".zip", backup_file + ".aes")
 
-            if os.path.exists(backup_file + ".zip"):
-                os.remove(backup_file + ".zip")
+                if os.path.exists(backup_file + ".zip"):
+                    os.remove(backup_file + ".zip")
+            else:
+                print("Encrypted back up isn't supported on Windows")
 
         print("\nBack up finished")
 
@@ -382,16 +385,19 @@ def main():
                     clean_up.append(filename)
 
                 elif file_extension == ".aes":  # install from encrypted archive
-                    print("\nRestoring back up from encrypted archive: {}".format(install))
-                    key = input("Enter password for decryption:")
-                    a = AesEncryption(key)
-                    print("\nDecrypting back up {} this may take a while...".format(install))
-                    a.decrypt(install, filename + ".zip")
-                    print("Unzipping archive this may take also a while...")
-                    extract_zip(filename + ".zip", filename)
-                    apk_path = filename
-                    clean_up.append(filename + ".zip")
-                    clean_up.append(filename)
+                    if os_platform is not "win":
+                        print("\nRestoring back up from encrypted archive: {}".format(install))
+                        key = input("Enter password for decryption:")
+                        a = AesEncryption(key)
+                        print("\nDecrypting back up {} this may take a while...".format(install))
+                        a.decrypt(install, filename + ".zip")
+                        print("Unzipping archive this may take also a while...")
+                        extract_zip(filename + ".zip", filename)
+                        apk_path = filename
+                        clean_up.append(filename + ".zip")
+                        clean_up.append(filename)
+                    else:
+                        print("Encrypted restored isn't supported on Windows")
 
         else:
             print("File or folder doesn't exist")

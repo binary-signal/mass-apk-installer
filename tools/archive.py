@@ -11,13 +11,13 @@ Purpose:  This module automates the installation of multiple apk's, apk is the
            in this directory must be only apk files.
            example: python apk_mass_install C:\Android\bin\ C:\Downloads\apks
 
- Author:      Evangelos Mouroutsos
+ Author:      Evan
 
  Created:     19/10/2011
  Last Modified: 12/02/2018
- Copyright:   (c) Evangelos Mouroutsos 2018
+ Copyright:   (c) Evan  2018
  Licence:
- Copyright (c) 2018, Evangelos Mouroutsos
+ Copyright (c) 2018, Evan
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
