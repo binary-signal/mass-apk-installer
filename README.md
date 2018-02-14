@@ -7,22 +7,20 @@ Last Update 12/02/2018
 
 # Table of contents:
 
-0x0: Support Information<br>
-0x1: Software Description<br>
+0x0: Software Description<br>
+0x1: Support Information<br>
 0x2: How to run the software<br>
 0x3: Use cases <br>
 0x4: Command Line Arguments<br>
 0x5: Change Log<br>
 
 
-## 0x0: Support Information
-You can sent requests, bugs and anything you want at: mvaggelis@gmail.com.
-
-Support for the software is provided through the dedicated XDA developers forum post [here](http://forum.xda-developers.com/showthread.php?t=1310742)
-
-## 0x1: Software Description
+## 0x0: Software Description
 This software automates the installation and back up of APK's, Android applications to your Android phone. It 
     uses the adb interface provided by Google to install apk's via command line prompt to the phone. 
+
+## 0x1: Support Information
+Support for the software is provided through the dedicated XDA developers forum post [here](http://forum.xda-developers.com/showthread.php?t=1310742)
 
 ## 0x2 How to run the software
 You will need to have python 3 installed plus two python dependencies py3-progressbar and pycrypto. You can do that by opening a terminal and typing the following command
