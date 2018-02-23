@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 """
- Name:        encryption
- Author:      Evan
+ Name:        encryption.py
 
+ Author:      Evan
  Created:     19/10/2011
  Last Modified: 12/02/2018
  Copyright:   (c) Evan 2018

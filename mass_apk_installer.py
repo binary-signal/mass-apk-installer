@@ -3,13 +3,7 @@
 """
  Name:        apk_mass_install
 
-Purpose:  This module automates back or restoration of multiple apk's, apk is the
-           standard executable in Android platform made by Google
-
-
-
  Author:      Evan
-
  Created:     19/10/2011
  Last Modified: 12/02/2018
  Copyright:   (c) Evan 2018
@@ -107,7 +101,7 @@ def pull_apk(pkg_dic):
 
 def package_management(PKG_FILTER):
     """
-    list all packages installed installed in android device. Results can be
+    Lists all packages installed  in android device. Results can be
     filtered with PKG_FILTER to get only apk packages you are interested. By
     default listing only 3d party apps.
     """
@@ -131,7 +125,7 @@ def package_management(PKG_FILTER):
 
 def get_package_full_path(pkg_name):
     """
-     Returns full path of package in android device storage specified by argument
+    Returns the full path of a package in android device storage
     """
 
     state = adb_command("shell pm path {}".format(pkg_name))
@@ -148,21 +142,21 @@ def get_package_full_path(pkg_name):
 
 def adb_start():
     """
-    starts an instance of adb server
+    Starts an instance of adb server
     """
     adb_command("start-server")
 
 
 def adb_kill():
     """
-    kills adb server
+    Kills adb server
     """
     adb_command("kill-server")
 
 
 def adb_state():
     """
-    gets the state of adb server if state is device then phone is connected
+    Gets the state of adb server if state is device then phone is connected
     """
     state = adb_command("get-state", ignore_return_code=True)
 
@@ -173,6 +167,9 @@ def adb_state():
 
 
 def adb_command(cmd, ignore_return_code=False):
+    """
+    Executes a command in the adb shell
+    """
     if os_platform is "osx":
         prefix = "./adb_osx/adb "
     elif os_platform is "win":
@@ -194,7 +191,7 @@ def adb_command(cmd, ignore_return_code=False):
 
 def adb_install(source_path):
     """
-    Install package to android device
+    Installs package to android device
     """
 
     # -d is to allow downgrade of apk
@@ -211,7 +208,7 @@ def adb_install(source_path):
 
 def rename_fix(path):
     """
-    apply  rename fix to files inside folder path,
+    Apply  rename fix to files inside folder path,
     replace space character with  underscore
     """
     if os.path.isdir(path):
@@ -231,6 +228,9 @@ def rename_fix(path):
 
 
 def get_apks(path):
+    """
+    Returns a list of apk in the specified system path
+    """
     if os.path.isdir(path):
         files = os.listdir(path)  # list all files in apk directory
         apk = []  # list holds the apk found in directory
@@ -249,7 +249,6 @@ def human_time(start, end):
 
 
 def parse_args():
-    # parse arguments
     parser = argparse.ArgumentParser(description="Simple Backup / Restore  of Android apps")
     parser.add_argument("-b", "--backup", help="perform device back up", action="store_true")
     parser.add_argument("-i", "--install", type=str,

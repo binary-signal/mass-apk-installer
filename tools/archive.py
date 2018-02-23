@@ -1,18 +1,9 @@
 #!/usr/bin/env python
+
 """
- Name:        archive
-
-Purpose:  This module automates the installation of multiple apk's, apk is the
-           standard executable in Android platform made by Google
-
- How to:   The module works with 2 command arguments the first is the file path
-           of the adb executable which is the bridge connecting an android phone
-           and a pc. The second argument is the directory of the apk to be installed
-           in this directory must be only apk files.
-           example: python apk_mass_install C:\Android\bin\ C:\Downloads\apks
+ Name:        archive.py
 
  Author:      Evan
-
  Created:     19/10/2011
  Last Modified: 12/02/2018
  Copyright:   (c) Evan  2018
