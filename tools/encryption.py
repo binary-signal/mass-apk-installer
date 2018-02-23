@@ -2,7 +2,7 @@
 
 """
  Name:        encryption
- Author:      Evan 
+ Author:      Evan
 
  Created:     19/10/2011
  Last Modified: 12/02/2018
@@ -139,7 +139,7 @@ class AesEncryption(object):
         widgets = ['progress: ', pb.Percentage(), ' ',
                    pb.Bar(), ' ', pb.ETA()]
         # initialize timer
-        timer = pb.ProgressBar(widgets=widgets, maxval=iteration+1).start()
+        timer = pb.ProgressBar(widgets=widgets, maxval=iteration + 1).start()
         count = 0
 
         # initialise IV a.k.a initialization vector for the AES encryption
@@ -233,6 +233,5 @@ class AesEncryption(object):
                     # finish
                     timer.finish()
                 except Exception:
-                    print("FUCK")
                     pass
         return decrypted_file
