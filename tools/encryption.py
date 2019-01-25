@@ -64,7 +64,7 @@ def is_ok_file_permission(file_path):
 def sha256_file(in_filename, block_size=1024):
     # open file
     try:
-        file = open(in_filename, 'rb')
+        file = open(in_filename, "rb")
     except FileNotFoundError:
         raise ValueError("file {} doesn't exists".format(in_filename))
 
@@ -91,7 +91,7 @@ def hash_sha256(data):
     # make sha256 object
     sha256 = hashlib.sha256()
     # update the new hash
-    sha256.update(data.encode('utf-8'))
+    sha256.update(data.encode("utf-8"))
 
     return sha256.hexdigest()
 
@@ -101,10 +101,10 @@ def validate_sha256(f_original, f_decoded):
     # find out if they math in case we did a job with encryption or decryption
     h1 = sha256_file(f_original)
     h2 = sha256_file(f_decoded)
-    print('{}: {}'.format(f_original, h1))
-    print('{}: {}'.format(f_decoded, h2))
+    print("{}: {}".format(f_original, h1))
+    print("{}: {}".format(f_decoded, h2))
     if h1 == h2:
-        print('Hash\'s match\n')
+        print("Hash's match\n")
     elif h1 != h2:
         raise ValueError("Hashes don't match")
 
@@ -112,7 +112,7 @@ def validate_sha256(f_original, f_decoded):
 def integrity_check(hash_str, file):
     # check a hash against a file
     if hash_str == sha256_file(file):
-        print('Hash\'s match\n')
+        print("Hash's match\n")
     else:
         raise ValueError("Hashes don't match")
 
@@ -120,7 +120,7 @@ def integrity_check(hash_str, file):
 class AesEncryption(object):
     def __init__(self, key_aes):
         self.block_size = 16
-        self.key_aes = hash_sha256(key_aes)[:self.block_size]
+        self.key_aes = hash_sha256(key_aes)[: self.block_size]
 
     # the function generates encrypted files with the extension
     # *.enc encrypted files are stored in the specified format
@@ -136,8 +136,7 @@ class AesEncryption(object):
         iteration = size / self.block_size
 
         # initialize widgets
-        widgets = ['progress: ', pb.Percentage(), ' ',
-                   pb.Bar(), ' ', pb.ETA()]
+        widgets = ["progress: ", pb.Percentage(), " ", pb.Bar(), " ", pb.ETA()]
         # initialize timer
         timer = pb.ProgressBar(widgets=widgets, maxval=iteration + 1).start()
         count = 0
@@ -150,12 +149,14 @@ class AesEncryption(object):
         # make an AES object with key,mode and iv
         aes_obj = AES.new(self.key_aes, AES.MODE_CBC, iv)
 
-        with open(input_file, 'rb') as infile:
-            with open(encrypted_file, 'wb') as outfile:
+        with open(input_file, "rb") as infile:
+            with open(encrypted_file, "wb") as outfile:
 
                 # encode file size of input file to be encrypted as unsigned long long
                 # in little-endian byte order before we store it to encrypted file
-                outfile.write(struct.pack('<Q', size))  # place the encoded file size
+                outfile.write(
+                    struct.pack("<Q", size)
+                )  # place the encoded file size
                 # at the start of the encrypted file followed by the IV vector, IV vector
                 # isn't a secret nor a key so we can store it/publish it in order to do
                 # decryption later
@@ -170,7 +171,9 @@ class AesEncryption(object):
                     # check if data length is 128 bit if not
                     # do zero padding
                     elif len(chunk) % self.block_size != 0:
-                        chunk += ' '.encode('utf-8') * (self.block_size - len(chunk) % self.block_size)
+                        chunk += " ".encode("utf-8") * (
+                            self.block_size - len(chunk) % self.block_size
+                        )
 
                     # encrypt babe!
                     cipher_text = aes_obj.encrypt(chunk)
@@ -188,11 +191,13 @@ class AesEncryption(object):
     def decrypt(self, encrypted_file, decrypted_file):
         if is_ok_file_permission(encrypted_file):
             raise ValueError("Can't read input file check file permissions")
-        with open(encrypted_file, 'rb') as infile:
-            with open(decrypted_file, 'wb') as outfile:
+        with open(encrypted_file, "rb") as infile:
+            with open(decrypted_file, "wb") as outfile:
 
                 # read the first 8 bytes which is the file size stored in the encrypted file
-                origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
+                origsize = struct.unpack(
+                    "<Q", infile.read(struct.calcsize("Q"))
+                )[0]
 
                 # read the IV stored in the encrypted file
                 iv = infile.read(self.block_size)
@@ -205,10 +210,18 @@ class AesEncryption(object):
                 iteration = size / self.block_size
 
                 # initialize widgets
-                widgets = ['progress: ', pb.Percentage(), ' ',
-                           pb.Bar(), ' ', pb.ETA()]
+                widgets = [
+                    "progress: ",
+                    pb.Percentage(),
+                    " ",
+                    pb.Bar(),
+                    " ",
+                    pb.ETA(),
+                ]
                 # initialize timer
-                timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start()
+                timer = pb.ProgressBar(
+                    widgets=widgets, maxval=iteration
+                ).start()
                 count = 0
 
                 try:
