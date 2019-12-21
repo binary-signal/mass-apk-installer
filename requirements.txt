@@ -1,2 +1,0 @@
-py3-progressbar==2.4.dev0
-pycrypto==2.6.1
