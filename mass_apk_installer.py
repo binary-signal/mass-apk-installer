@@ -34,20 +34,17 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  """
 
-from timeit import default_timer as timer
-from platform import system
-from datetime import datetime
+import os
+import sys
 import time
 import subprocess
 import argparse
 import shutil
-import sys
-import os
 import zipfile
+from timeit import default_timer as timer
+from platform import system
+from datetime import datetime
 
-import progressbar as pb
-
-from tools.encryption import AesEncryption
 
 INSTALL_FAILURE = -1
 INSTALL_OK = 1
@@ -90,11 +87,7 @@ class ZipTools:
     @staticmethod
     def zipdir(path, zipf):
         if os.path.isdir(path):
-            files = [
-                f
-                for f in os.listdir(path)
-                if os.path.isfile(os.path.join(path, f))
-            ]
+            files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
             abs_src = os.path.abspath(path)
             apks = []
             for file in files:
@@ -103,29 +96,16 @@ class ZipTools:
 
             iteration = len(apks)
 
-            # initialize widgets
-            widgets = [
-                "progress: ",
-                pb.Percentage(),
-                " ",
-                pb.Bar(),
-                " ",
-                pb.ETA(),
-            ]
-            # initialize timer
-            timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start()
             count = 0
 
             for apk in apks:
                 # don't preserver folder structure inside zip file
                 absname = os.path.abspath(os.path.join(path, apk))
-                arcname = absname[len(abs_src) + 1 :]
+                arcname = absname[len(abs_src) + 1:]
                 zipf.write(os.path.join(path, apk), arcname)
 
                 # update progress bar
                 count += 1
-                timer.update(count)
-            timer.finish()
 
     @staticmethod
     def make_zip(path, output):
@@ -144,17 +124,7 @@ class ZipTools:
 
             iteration = len(zip.namelist())
 
-            # initialize widgets
-            widgets = [
-                "progress: ",
-                pb.Percentage(),
-                " ",
-                pb.Bar(),
-                " ",
-                pb.ETA(),
-            ]
-            # initialize timer
-            timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start()
+
             count = 0
 
             # extract files
@@ -164,12 +134,9 @@ class ZipTools:
 
                     # update progress bar
                     count += 1
-                    timer.update(count)
+
                 except KeyError:
-                    print(
-                        "ERROR: Did not find {} in zip file".format(filename)
-                    )
-            timer.finish()
+                    print("ERROR: Did not find {} in zip file".format(filename))
 
 
 def pull_apk(pkg_dic):
@@ -324,41 +291,20 @@ def rename_fix(path):
 def human_time(start, end):
     hours, rem = divmod(end - start, 3600)
     minutes, seconds = divmod(rem, 60)
-    print(
-        "Elapsed time {:0>2}:{:0>2}:{:05.2f}".format(
-            int(hours), int(minutes), seconds
-        )
-    )
+    print("Elapsed time {:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Simple Backup / Restore  of Android apps"
-    )
-    subparsers = parser.add_subparsers(
-        required=True, dest="command", help="command help"
-    )
-    parser_restore = subparsers.add_parser(
-        "restore", help="restore a back up to device from path"
-    )
-    parser_restore.add_argument(
-        "path", help="path to folder, zip file or encrypted archive backup"
-    )
+    parser = argparse.ArgumentParser(description="Simple Backup / Restore  of Android apps")
+    subparsers = parser.add_subparsers(required=True, dest="command", help="command help")
+    parser_restore = subparsers.add_parser("restore", help="restore a back up to device from path")
+    parser_restore.add_argument("path", help="path to folder, zip file or encrypted archive backup")
 
-    parser_backup = subparsers.add_parser(
-        "backup", help="perform device back up"
-    )
+    parser_backup = subparsers.add_parser("backup", help="perform device back up")
+    parser_backup.add_argument("-o", "--outdir", help="save backup  to path", default=".")
+    parser_backup.add_argument("-a", "--archive", help="create  a zipped backup", action="store_true")
     parser_backup.add_argument(
-        "-o", "--outdir", help="save backup  to path", default="."
-    )
-    parser_backup.add_argument(
-        "-a", "--archive", help="create  a zipped backup", action="store_true"
-    )
-    parser_backup.add_argument(
-        "-e",
-        "--encrypt",
-        help="create an encrypted backup",
-        action="store_true",
+        "-e", "--encrypt", help="create an encrypted backup", action="store_true",
     )
     args = parser.parse_args()
     args = vars(args)
@@ -381,12 +327,7 @@ def summary(install_state):
 
 def back_up(archive=False, encrypt=False):
     # generate filename from current date time
-    backup_file = (
-        str(datetime.utcnow())
-        .split(".")[0]
-        .replace(" ", "_")
-        .replace(":", "-")
-    )
+    backup_file = str(datetime.utcnow()).split(".")[0].replace(" ", "_").replace(":", "-")
     try:
         os.rmdir(backup_file)
         os.mkdir(backup_file)
@@ -430,19 +371,6 @@ def back_up(archive=False, encrypt=False):
         if os.path.exists(backup_file):
             shutil.rmtree(backup_file)
 
-    if encrypt:
-
-        key = input("Enter password for encryption:")
-        a = AesEncryption(key)
-        print(
-            f"\nEncrypting archive {backup_file}.zip this may take a while..."
-        )
-        a.encrypt(backup_file + ".zip", backup_file + ".aes")
-
-        try:
-            os.remove(backup_file + ".zip")
-        except FileNotFoundError:
-            pass
 
     print("\nBack up finished")
 
@@ -468,20 +396,7 @@ def restore(backup_path):
             apk_path = filename
             clean_up.append(filename)
 
-        # install from encrypted archive
-        elif ".aes" in file_extension:
 
-            key = input("Enter password for decryption:")
-            a = AesEncryption(key)
-            print(
-                f"\nDecrypting back up {backup_path} this may take a while..."
-            )
-            a.decrypt(backup_path, filename + ".zip")
-            print("Unzipping archive this may take also a while...")
-            ZipTools.extract_zip(filename + ".zip", filename)
-            apk_path = filename
-            clean_up.append(filename + ".zip")
-            clean_up.append(filename)
 
     try:
         rename_fix(apk_path)
@@ -493,22 +408,14 @@ def restore(backup_path):
     # calculate total installation size
     size = [os.path.getsize(os.path.join(apk_path, apk)) for apk in apks]
 
-    print(
-        "\nTotal Installation Size: {0:.2f} MB\n{}".format(
-            sum(size) / (1024 * 1024), "-" * 10
-        )
-    )
+    print("\nTotal Installation Size: {0:.2f} MB\n{}".format(sum(size) / (1024 * 1024), "-" * 10))
     state = []
     progress = 0
 
     space = len(str(len(apks)))  # calculate space for progress bar
     for apk in apks:
         progress += 1
-        print(
-            "[{0:{space}d}/{1:{space}d}] Installing {2}".format(
-                progress, len(apks), str(apk), space=space
-            )
-        )
+        print("[{0:{space}d}/{1:{space}d}] Installing {2}".format(progress, len(apks), str(apk), space=space))
         s = adb_install(os.path.join(apk_path, apk))
         state.append(s)
 

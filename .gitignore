@@ -94,3 +94,7 @@ ENV/
 **/.idea/modules.xml
 **/.idea/vcs.xml
 .DS_Store
+/.venv/
+.idea/inspectionProfiles/
+.idea/mass-apk-installer.iml
+.idea/misc.xml
