@@ -2,7 +2,7 @@ import os
 import logging
 import argparse
 import time
-import datetime
+import datetime as dt
 import shutil
 from timeit import default_timer as timer
 
@@ -26,63 +26,54 @@ def summary(install_state):
     print(f"Installed:{success} |  Failed:{fail}")
 
 
-def back_up(archive=False, encrypt=False):
+def back_up(archive=False):
     # generate filename from current date time
     backup_file = (
-        str(datetime.utcnow()).split(".")[0].replace(" ", "_").replace(":", "-")
+        str(dt.datetime.now()).split(".")[0].replace(" ", "_").replace(":", "-")
     )
-    try:
-        os.rmdir(backup_file)
 
-    except FileNotFoundError:
-        os.mkdir(backup_file)
-
+    os.mkdir(backup_file)
     print("Listing installed apk's in device...\n")
     # get user installed packages
     pkgs = package_management(pkg_flags["user"])
 
     num_apk = len(pkgs)
-
     print("Discovering apks paths this may take a while...")
     # get full path on the android filesystem for each installed package
-    paths = [get_package_full_path(pkg) for pkg in pkgs]
+    paths = list(map(get_package_full_path, pkgs))
 
     # combine apk name and apk path into dictionary object
-    pkgs_paths = [{pkg: paths} for pkg, path in zip(pkgs, paths)]
+    pkgs_paths = [{pkg: path} for pkg, path in zip(pkgs, paths)]
 
     print(f"\nFound {num_apk} installed packages\n")
 
-    space = len(str(num_apk))  # calculate space for progress bar
-    progress = 0
-    for i in pkgs_paths:  # i is dict {package name: package path}
-        progress += 1
+    for progress, apk in enumerate(pkgs_paths, 1):
+        # apk is dict {package name: package path}
         print(
             "[{0:{space}d}/{1:{space}d}] pulling ... {2}".format(
-                progress, num_apk, i[list(i)[0]], space=space
+                progress, num_apk, apk[list(apk)[0]]
             )
         )
-        pull_apk(i)  # get apk from device
+        pull_apk(apk)  # get apk from device
 
         shutil.move(
-            list(i)[0] + ".apk",  # move apk to back up directory
-            os.path.join(backup_file, list(i)[0] + ".apk"),
+            list(apk)[0] + ".apk",  # move apk to back up directory
+            os.path.join(backup_file, list(apk)[0] + ".apk"),
         )
 
     if archive:
         print(f"\nCreating zip archive: {backup_file}.zip")
         make_zip(backup_file, backup_file + ".zip")
-        if os.path.exists(backup_file):
-            shutil.rmtree(backup_file)
+        shutil.rmtree(backup_file)
 
-    print("\nBack up finished")
+    log.info("Back up finished")
 
 
 def restore(backup_path):
     clean_up = []  # list of files, dirs to delete after install
 
     if not os.path.exists(backup_path):
-        print(f"File or folder doesn't exist {backup_path}")
-        return
+        raise FileNotFoundError(f"File or folder doesn't exist {backup_path}")
 
     if os.path.isdir(backup_path):  # install from folder
         print(f"\nRestoring back up from folder: {backup_path}")
@@ -108,18 +99,14 @@ def restore(backup_path):
     # calculate total installation size
     size = [os.path.getsize(os.path.join(apk_path, apk)) for apk in apks]
 
-    massapk_log.info(
-        "Total Installation Size: {0:.2f} MB".format(sum(size) / (1024 * 1024))
-    )
+    log.info("Total Installation Size: {0:.2f} MB".format(sum(size) / (1024 * 1024)))
     state = []
-    progress = 0
 
-    space = len(str(len(apks)))  # calculate space for progress bar
-    for apk in apks:
-        progress += 1
+    for progress, apk in enumerate(apks, 1):
+
         print(
             "[{0:{space}d}/{1:{space}d}] Installing {2}".format(
-                progress, len(apks), str(apk), space=space
+                progress, len(apks), str(apk)
             )
         )
         s = adb_push(os.path.join(apk_path, apk))
@@ -167,7 +154,7 @@ def parse_args():
 
 
 def main(command, args):
-    print("Apk Mass Installer Utility \nVersion: 3.1\n")
+    print("Apk Mass Installer Utility \nVersion: 0.3.1\n")
 
     adb_kill()  # kill any instances of adb before starting if any
 
