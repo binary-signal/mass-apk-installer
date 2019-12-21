@@ -98,3 +98,4 @@ ENV/
 .idea/inspectionProfiles/
 .idea/mass-apk-installer.iml
 .idea/misc.xml
+/.idea/codeStyles/codeStyleConfig.xml
