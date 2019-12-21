@@ -5,17 +5,12 @@ import time
 import datetime
 import shutil
 from timeit import default_timer as timer
-from mass_apk import massapk_log
+
+from mass_apk import logger as log
 from mass_apk.adb import adb_push, adb_kill, adb_start, adb_state, APK
 from mass_apk.apk import package_management, pull_apk, pkg_flags, get_package_full_path
 from mass_apk.helpers import human_time, rename_fix
 from mass_apk.ziptools import extract_zip, make_zip
-
-log = logging.getLogger(massapk_log)
-log.setLevel(logging.INFO)
-
-
-log.info("cucuc")
 
 
 def summary(install_state):

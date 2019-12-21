@@ -1,7 +1,15 @@
 import subprocess
+import logging
 from enum import Enum, unique
+
+
 from mass_apk.helpers import get_adb_path
 from mass_apk.exceptions import AdbError
+
+
+log = logging.getLogger(__name__)
+
+log.info("fff")
 
 
 @unique
@@ -10,7 +18,7 @@ class APK(Enum):
 
     FAILED = -1
     INSTALLED = 0
-    EXISTS = -1
+    EXISTS = 1
 
 
 adb_path = get_adb_path()
