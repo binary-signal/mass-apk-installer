@@ -8,7 +8,7 @@
  Last Modified: 12/02/2018
  Copyright:   (c) Evan 2018
  Licence:
- Copyright (c) 2018, Evan
+ Copyright (c) 2019, Evan
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
