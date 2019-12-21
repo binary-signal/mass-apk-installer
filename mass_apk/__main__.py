@@ -1,10 +1,16 @@
+import os
 import logging
 import argparse
 import time
-
+import datetime
+import shutil
+from timeit import default_timer as timer
 from mass_apk import massapk_log
-from mass_apk.adb import adb_push, adb_kill, adb_start, adb_state
-from mass_apk.helpers import human_time
+from mass_apk.adb import adb_push, adb_kill, adb_start, adb_state, APK
+from mass_apk.apk import package_management, pull_apk, pkg_flags, get_package_full_path
+from mass_apk.helpers import human_time, rename_fix
+from mass_apk.ziptools import extract_zip, make_zip
+
 log = logging.getLogger(massapk_log)
 log.setLevel(logging.INFO)
 
@@ -18,9 +24,9 @@ def summary(install_state):
 
     print("\n\nSummary: ")
     for s in install_state:
-        if s == INSTALL_FAILURE:
+        if s == APK.FAILED:
             fail = fail + 1
-        elif s == INSTALL_OK:
+        elif s == APK.INSTALLED:
             success = success + 1
     print(f"Installed:{success} |  Failed:{fail}")
 
@@ -107,10 +113,8 @@ def restore(backup_path):
     # calculate total installation size
     size = [os.path.getsize(os.path.join(apk_path, apk)) for apk in apks]
 
-    print(
-        "\nTotal Installation Size: {0:.2f} MB\n{}".format(
-            sum(size) / (1024 * 1024), "-" * 10
-        )
+    massapk_log.info(
+        "Total Installation Size: {0:.2f} MB".format(sum(size) / (1024 * 1024))
     )
     state = []
     progress = 0
@@ -135,8 +139,6 @@ def restore(backup_path):
             elif os.path.isfile(f):
                 os.remove(f)
     print("\nRestore  finished")
-
-
 
 
 def parse_args():
@@ -198,6 +200,7 @@ def main(command, args):
     human_time(t_start, timer())
 
     adb_kill()
+
 
 if __name__ == "__main__":
     command, args = parse_args()

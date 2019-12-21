@@ -12,8 +12,6 @@ pkg_flags = {
 }
 
 
-
-
 def get_package_full_path(pkg_name):
     """
     Returns the full path of a package in android device storage
@@ -26,7 +24,6 @@ def get_package_full_path(pkg_name):
     # we need to strip package: prefix in returned string
 
     return state.split(":")[1].strip()
-
 
 
 def package_management(PKG_FILTER):
@@ -71,5 +68,3 @@ def pull_apk(pkg_dic):
     if exit_code == 0:
         if os.path.exists("base.apk"):
             os.rename("base.apk", pkg_name[0] + ".apk")
-
-

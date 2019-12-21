@@ -74,4 +74,3 @@ def rename_fix(path):
         for old, new in zip(files, new_files):
             os.rename(os.path.join(path, old), os.path.join(path, new))
     raise NotADirectoryError
-
