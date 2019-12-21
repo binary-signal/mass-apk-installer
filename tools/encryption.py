@@ -154,9 +154,7 @@ class AesEncryption(object):
 
                 # encode file size of input file to be encrypted as unsigned long long
                 # in little-endian byte order before we store it to encrypted file
-                outfile.write(
-                    struct.pack("<Q", size)
-                )  # place the encoded file size
+                outfile.write(struct.pack("<Q", size))  # place the encoded file size
                 # at the start of the encrypted file followed by the IV vector, IV vector
                 # isn't a secret nor a key so we can store it/publish it in order to do
                 # decryption later
@@ -171,9 +169,7 @@ class AesEncryption(object):
                     # check if data length is 128 bit if not
                     # do zero padding
                     elif len(chunk) % self.block_size != 0:
-                        chunk += " ".encode("utf-8") * (
-                            self.block_size - len(chunk) % self.block_size
-                        )
+                        chunk += " ".encode("utf-8") * (self.block_size - len(chunk) % self.block_size)
 
                     # encrypt babe!
                     cipher_text = aes_obj.encrypt(chunk)
@@ -195,9 +191,7 @@ class AesEncryption(object):
             with open(decrypted_file, "wb") as outfile:
 
                 # read the first 8 bytes which is the file size stored in the encrypted file
-                origsize = struct.unpack(
-                    "<Q", infile.read(struct.calcsize("Q"))
-                )[0]
+                origsize = struct.unpack("<Q", infile.read(struct.calcsize("Q")))[0]
 
                 # read the IV stored in the encrypted file
                 iv = infile.read(self.block_size)
@@ -219,9 +213,7 @@ class AesEncryption(object):
                     pb.ETA(),
                 ]
                 # initialize timer
-                timer = pb.ProgressBar(
-                    widgets=widgets, maxval=iteration
-                ).start()
+                timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start()
                 count = 0
 
                 try:

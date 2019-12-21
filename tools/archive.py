@@ -59,8 +59,7 @@ def zipdir(path, zipf):
         iteration = len(apks)
 
         # initialize widgets
-        widgets = ['progress: ', pb.Percentage(), ' ',
-                   pb.Bar(), ' ', pb.ETA()]
+        widgets = ["progress: ", pb.Percentage(), " ", pb.Bar(), " ", pb.ETA()]
         # initialize timer
         timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start()
         count = 0
@@ -68,7 +67,7 @@ def zipdir(path, zipf):
         for apk in apks:
             # don't preserver folder structure inside zip file
             absname = abspath(join(path, apk))
-            arcname = absname[len(abs_src) + 1:]
+            arcname = absname[len(abs_src) + 1 :]
             zipf.write(join(path, apk), arcname)
 
             # update progress bar
@@ -78,14 +77,14 @@ def zipdir(path, zipf):
 
 
 def make_zip(path, output):
-    zipf = zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED)
+    zipf = zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED)
     zipdir(path, zipf)
     zipf.close()
 
 
 def extract_zip(zip_file, output):
     if zipfile.is_zipfile(zip_file):
-        zip = zipfile.ZipFile(zip_file, 'r')
+        zip = zipfile.ZipFile(zip_file, "r")
 
         # create output directory if doesn't exist
         if not exists(output):
@@ -94,8 +93,7 @@ def extract_zip(zip_file, output):
         iteration = len(zip.namelist())
 
         # initialize widgets
-        widgets = ['progress: ', pb.Percentage(), ' ',
-                   pb.Bar(), ' ', pb.ETA()]
+        widgets = ["progress: ", pb.Percentage(), " ", pb.Bar(), " ", pb.ETA()]
         # initialize timer
         timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start()
         count = 0
@@ -109,5 +107,5 @@ def extract_zip(zip_file, output):
                 count += 1
                 timer.update(count)
             except KeyError:
-                print('ERROR: Did not find {} in zip file'.format(filename))
+                print("ERROR: Did not find {} in zip file".format(filename))
         timer.finish()
