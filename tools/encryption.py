@@ -169,7 +169,9 @@ class AesEncryption(object):
                     # check if data length is 128 bit if not
                     # do zero padding
                     elif len(chunk) % self.block_size != 0:
-                        chunk += " ".encode("utf-8") * (self.block_size - len(chunk) % self.block_size)
+                        chunk += " ".encode("utf-8") * (
+                            self.block_size - len(chunk) % self.block_size
+                        )
 
                     # encrypt babe!
                     cipher_text = aes_obj.encrypt(chunk)
