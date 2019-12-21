@@ -138,7 +138,7 @@ class AesEncryption(object):
         # initialize widgets
         widgets = ["progress: ", pb.Percentage(), " ", pb.Bar(), " ", pb.ETA()]
         # initialize timer
-        timer = pb.ProgressBar(widgets=widgets, maxval=iteration + 1).start()
+        timer = pb.ProgressBar(widgets=widgets, maxval=iteration + 1).start_server()
         count = 0
 
         # initialise IV a.k.a initialization vector for the AES encryption
@@ -215,7 +215,7 @@ class AesEncryption(object):
                     pb.ETA(),
                 ]
                 # initialize timer
-                timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start()
+                timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start_server()
                 count = 0
 
                 try:

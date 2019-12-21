@@ -10,7 +10,7 @@ class OS(Enum):
     WIN = "win"
 
 
-def detect_os() -> OS:
+def MASSAPK_OS() -> OS:
     """
     Detect running operating system
 
@@ -29,23 +29,7 @@ def detect_os() -> OS:
     raise RuntimeError("Unsupported OS")
 
 
-detected_os = detect_os()
-
-
-def get_adb_path() -> os.path:
-    """
-    Return adb path based on operating system
-    """
-    global detected_os
-
-    if detected_os is OS.OSX:
-        return os.path.join("adb", "osx", "adb")
-
-    elif detected_os is OS.WIN:
-        return os.path.join("adb", "win", "adb.exe")
-
-    elif detected_os is OS.LINUX:
-        return os.path.join("adb", "linux", "adb")
+MASSAPK_OS = MASSAPK_OS()
 
 
 def human_time(start, end):

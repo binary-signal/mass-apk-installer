@@ -1,23 +1,22 @@
 import os
 import subprocess
 
-from mass_apk.adb import adb_command, adb_path
+from mass_apk.adb import Adb
 from mass_apk.helpers import OS
-
+from mass_apk.adb import AdbError
 # Flags for adb list packages
-pkg_flags = {
-    "all": "",  # list all packages
-    "user": "-3",  # list 3d party packages only (default)
-    "system": "-S",  # list system packages only
-}
 
+adb = Adb()
 
 def get_package_full_path(pkg_name):
     """
     Returns the full path of a package in android device storage
     """
 
-    state = adb_command(f"shell pm path {pkg_name}")
+    global adb
+    try:
+        state = adb_command(f"shell pm path {pkg_name}")
+    except AdbError as error:
 
     # adb returns packages name  in the form
     # package:/data/app/com.dog.raider-2/base.apk
@@ -51,18 +50,10 @@ def pull_apk(pkg_dic):
     renames extracted apk to filename specified in pkgDic key value pair.
     """
 
-    global detected_os
     pkg_name = list(pkg_dic)
 
-    if detected_os == OS.OSX:
 
-        cmd = f"{adb_path} shell cat {pkg_dic[pkg_name[0]]} > base.apk"
-        # cmd = "./osx/adb pull " + pkgDic[pkg_name[0]] doesn't work anymore after nougat update
-    elif detected_os == OS.WIN:
-
-        cmd = f"{adb_path} pull {pkg_dic[pkg_name[0]]}"
-    elif detected_os == OS.LINUX:
-        cmd = f"{adb_path} shell cat {pkg_dic[pkg_name[0]]} > base.apk"
+    cmd = f" pull {pkg_dic[pkg_name[0]]}"
 
     exit_code, output = subprocess.getstatusoutput(cmd)
     if exit_code == 0:

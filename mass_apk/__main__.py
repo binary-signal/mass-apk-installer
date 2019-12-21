@@ -7,7 +7,7 @@ import shutil
 from timeit import default_timer as timer
 
 from mass_apk import logger as log
-from mass_apk.adb import adb_push, adb_kill, adb_start, adb_state, APK
+from mass_apk.adb import adb_push, adb_kill, adb_start, adb_state, STATE, APK
 from mass_apk.apk import package_management, pull_apk, pkg_flags, get_package_full_path
 from mass_apk.helpers import human_time, rename_fix
 from mass_apk.ziptools import extract_zip, make_zip
@@ -153,8 +153,8 @@ def main(args):
     adb_kill()  # kill any instances of adb before starting if any
 
     # wait for adb to detect phone
-    while True:
-        if adb_state():
+    while not (state := adb_state()):
+        if state == STATE.CONNECTED:
             break
         print("No phone connected waiting to connect phone")
         time.sleep(1)

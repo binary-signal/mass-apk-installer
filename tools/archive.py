@@ -61,7 +61,7 @@ def zipdir(path, zipf):
         # initialize widgets
         widgets = ["progress: ", pb.Percentage(), " ", pb.Bar(), " ", pb.ETA()]
         # initialize timer
-        timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start()
+        timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start_server()
         count = 0
 
         for apk in apks:
@@ -95,7 +95,7 @@ def extract_zip(zip_file, output):
         # initialize widgets
         widgets = ["progress: ", pb.Percentage(), " ", pb.Bar(), " ", pb.ETA()]
         # initialize timer
-        timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start()
+        timer = pb.ProgressBar(widgets=widgets, maxval=iteration).start_server()
         count = 0
 
         # extract files
