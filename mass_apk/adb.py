@@ -31,7 +31,7 @@ def adb_start():
     adb_command("start-server")
 
 
-def adb_kill():
+def     adb_kill():
     """
     Kills adb server
     """

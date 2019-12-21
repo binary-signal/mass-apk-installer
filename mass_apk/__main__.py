@@ -103,7 +103,6 @@ def restore(backup_path):
     state = []
 
     for progress, apk in enumerate(apks, 1):
-
         print(
             "[{0:{space}d}/{1:{space}d}] Installing {2}".format(
                 progress, len(apks), str(apk)
@@ -124,36 +123,31 @@ def restore(backup_path):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Simple Backup / Restore  of Android apps"
-    )
-    subparsers = parser.add_subparsers(
-        required=True, dest="command", help="command help"
-    )
-    parser_restore = subparsers.add_parser(
-        "restore", help="restore a back up to device from path"
-    )
-    parser_restore.add_argument(
-        "path", help="path to folder, zip file or encrypted archive backup"
-    )
+    # create the top-level parser
+    parser = argparse.ArgumentParser(prog="massapk")
+    parser.add_argument("--foo", action="store_true", help="help for foo arg.")
+    subparsers = parser.add_subparsers(help="help for subcommand")
 
-    parser_backup = subparsers.add_parser("backup", help="perform device back up")
+    # create the parser for the "backup" command
+    parser_backup = subparsers.add_parser("backup", help="backup help")
     parser_backup.add_argument(
-        "-o", "--outdir", help="save backup  to path", default="."
+        "-p",
+        type=str,
+        default=os.getcwd(),
+        help="path to folder, zip file or encrypted archive backup",
     )
-    parser_backup.add_argument(
-        "-a", "--archive", help="create  a zipped backup", action="store_true"
-    )
-    parser_backup.add_argument(
-        "-e", "--encrypt", help="create an encrypted backup", action="store_true",
-    )
+    parser_backup.add_argument("-a", action="store_true", help="back up to an zip file")
+
+    # create the parser for the "restore" command
+    parser_restore = subparsers.add_parser("restore", help="help for restore")
+    parser_restore.add_argument("-b", type=str, help="help for b")
+    parser_restore.add_argument("-c", type=str, action="store", default="", help="test")
+
     args = parser.parse_args()
-    args = vars(args)
-    command = args.pop("command")
-    return command, args
+    return args
 
 
-def main(command, args):
+def main(args):
     print("Apk Mass Installer Utility \nVersion: 0.3.1\n")
 
     adb_kill()  # kill any instances of adb before starting if any
@@ -185,8 +179,8 @@ def main(command, args):
 
 
 if __name__ == "__main__":
-    command, args = parse_args()
+    args = parse_args()
     try:
-        main(command, args)
+        main(args)
     except KeyboardInterrupt:
         print("Received Interrupt")
