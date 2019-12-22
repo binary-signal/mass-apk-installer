@@ -1,6 +1,8 @@
 import os
 import zipfile
 
+from mass_apk import logger as log
+
 __all__ = ["extract_zip", "make_zip"]
 
 
@@ -60,4 +62,4 @@ def extract_zip(zip_file, output):
                 count += 1
 
             except KeyError:
-                print("ERROR: Did not find {} in zip file".format(filename))
+                log.error("Didn't find {} in zip file".format(filename))

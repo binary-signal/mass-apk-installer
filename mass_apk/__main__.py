@@ -1,75 +1,65 @@
+from typing import List, Dict, Union
 import os
 import logging
+import sys
 import argparse
+
 import time
 import datetime as dt
 import shutil
 from timeit import default_timer as timer
 
 from mass_apk import logger as log
-from mass_apk.adb import adb_push, adb_kill, adb_start, adb_state, STATE, APK
-from mass_apk.apk import package_management, pull_apk, pkg_flags, get_package_full_path
-from mass_apk.helpers import human_time, rename_fix
+from mass_apk import adb
+from mass_apk.apk import get_package_full_path
+from mass_apk import Apkitem
+from mass_apk.helpers import human_time, rename_fix, timed
 from mass_apk.ziptools import extract_zip, make_zip
+from mass_apk.apk import AdbError
 
 
-def summary(install_state):
-    success = 0
-    fail = 0
+@timed
+def back_up(path, list_flag: adb.AdbFlag, archive=False):
+    t_start = timer()
 
-    print("\n\nSummary: ")
-    for s in install_state:
-        if s == APK.FAILED:
-            fail = fail + 1
-        elif s == APK.INSTALLED:
-            success = success + 1
-    print(f"Installed:{success} |  Failed:{fail}")
-
-
-def back_up(archive=False):
-    # generate filename from current date time
-    backup_file = (
-        str(dt.datetime.now()).split(".")[0].replace(" ", "_").replace(":", "-")
-    )
-
-    os.mkdir(backup_file)
-    print("Listing installed apk's in device...\n")
     # get user installed packages
-    pkgs = package_management(pkg_flags["user"])
+    pkgs = adb.list_device(list_flag)
 
-    num_apk = len(pkgs)
-    print("Discovering apks paths this may take a while...")
+    log.info("Discovering apk paths, this may take a while...")
     # get full path on the android filesystem for each installed package
-    paths = list(map(get_package_full_path, pkgs))
+    pkg_paths = list()
+    for pkg in pkgs:
+        if path := get_package_full_path(pkg):
+            pkg_paths.append((pkg, path))
 
-    # combine apk name and apk path into dictionary object
-    pkgs_paths = [{pkg: path} for pkg, path in zip(pkgs, paths)]
+    # map apk name and apk path
+    mapped_pkg: List[Apkitem] = [Apkitem(*p) for p in pkg_paths]
 
-    print(f"\nFound {num_apk} installed packages\n")
-
-    for progress, apk in enumerate(pkgs_paths, 1):
-        # apk is dict {package name: package path}
-        print(
-            "[{0:{space}d}/{1:{space}d}] pulling ... {2}".format(
-                progress, num_apk, apk[list(apk)[0]]
-            )
-        )
-        pull_apk(apk)  # get apk from device
-
-        shutil.move(
-            list(apk)[0] + ".apk",  # move apk to back up directory
-            os.path.join(backup_file, list(apk)[0] + ".apk"),
-        )
+    log.info(f"Found {len(mapped_pkg)} installed packages")
+    for progress, apk_item in enumerate(mapped_pkg, 1):
+        log.info(f"[{progress:4}/{len(mapped_pkg):4}] pulling ... {apk_item.name}")
+        try:
+            adb.pull(apk_item.fullpath)  # get apk from device
+        except AdbError:
+            pass
+        # move apk to back up directory
+        else:
+            if os.path.exists("base.apk"):
+                dest = os.path.join(args.path, f"{apk_item.name}.apk")
+                shutil.move(f"base.apk", dest)
+            else:
+                log.warning("file base.apk not found")
 
     if archive:
-        print(f"\nCreating zip archive: {backup_file}.zip")
-        make_zip(backup_file, backup_file + ".zip")
-        shutil.rmtree(backup_file)
+        log.info(f"Creating zip archive: {args.path}.zip, this may take a while")
+        make_zip(args.path, args.path + ".zip")
+        shutil.rmtree(args.path)
 
-    log.info("Back up finished")
+    log.info("Back up done.")
 
 
 def restore(backup_path):
+    t_start = timer()
     clean_up = []  # list of files, dirs to delete after install
 
     if not os.path.exists(backup_path):
@@ -108,10 +98,8 @@ def restore(backup_path):
                 progress, len(apks), str(apk)
             )
         )
-        s = adb_push(os.path.join(apk_path, apk))
+        s = adb.push(os.path.join(apk_path, apk))
         state.append(s)
-
-    summary(state)
 
     for f in clean_up:
         if os.path.exists(f):
@@ -119,6 +107,7 @@ def restore(backup_path):
                 shutil.rmtree(f)
             elif os.path.isfile(f):
                 os.remove(f)
+    human_time(t_start, timer())
     print("\nRestore  finished")
 
 
@@ -126,60 +115,82 @@ def parse_args():
     # create the top-level parser
     parser = argparse.ArgumentParser(prog="massapk")
     parser.add_argument("--foo", action="store_true", help="help for foo arg.")
-    subparsers = parser.add_subparsers(help="help for subcommand")
+    subparsers = parser.add_subparsers(
+        title="commands", dest="command", help="help for commands", required=True
+    )
 
     # create the parser for the "backup" command
-    parser_backup = subparsers.add_parser("backup", help="backup help")
-    parser_backup.add_argument(
+    backup_sub = subparsers.add_parser("backup", help="backup help")
+    backup_sub.add_argument(
+        "-f",
+        "--flag",
+        type=adb.AdbFlag,
+        default=adb.AdbFlag.USER,
+        help="Specify which apks to backup. Defaults to  user apks."
+        "Can be overriden to back up system apks with SYS or all apks with ALL",
+    )
+
+    backup_sub.add_argument(
         "-p",
+        "--path",
         type=str,
         default=os.getcwd(),
-        help="path to folder, zip file or encrypted archive backup",
+        help="Folder or Path on filesystem to save back up",
     )
-    parser_backup.add_argument("-a", action="store_true", help="back up to an zip file")
+    backup_sub.add_argument(
+        "-a",
+        "--archive",
+        action="store_true",
+        help="compress back up folder into zip file",
+    )
 
     # create the parser for the "restore" command
-    parser_restore = subparsers.add_parser("restore", help="help for restore")
-    parser_restore.add_argument("-b", type=str, help="help for b")
-    parser_restore.add_argument("-c", type=str, action="store", default="", help="test")
+    restore_sub = subparsers.add_parser("restore", help="help for restore")
+    restore_sub.add_argument(
+        "-p", "--path", type=str, help="Back up File or Folder to restore from"
+    )
 
     args = parser.parse_args()
     return args
 
 
 def main(args):
+    print(args)
     print("Apk Mass Installer Utility \nVersion: 0.3.1\n")
 
-    adb_kill()  # kill any instances of adb before starting if any
+    adb.stop_server()  # kill any instances of bin before starting if any
 
-    # wait for adb to detect phone
-    while not (state := adb_state()):
-        if state == STATE.CONNECTED:
-            break
-        print("No phone connected waiting to connect phone")
+    # wait for bin to detect phone
+    while not (state := adb.state):
         time.sleep(1)
 
-    print("Starting adb server...")
-    adb_start()  # start an instance of adb server
+    adb.start_server()  # start an instance of bin server
 
-    t_start = timer()
+    if command := args.command == "backup":
+        try:
+            os.mkdir(args.path)
+        except FileExistsError:
+            log.warning("Back up destination already exists !")
 
-    if "backup" == command:
-        archive = args.pop("archive", False)
+        back_up(args.path, args.flag, args.archive)
 
-        back_up(archive)
+    elif command == "restore":
+        try:
+            os.path.exists(args.path)
+        except FileNotFoundError:
+            log.error(
+                f"Back Folder or Path doesn't exit. Path {(os.path.abspath(args.path))}"
+            )
+            sys.exit(-1)
 
-    elif "restore" == command:
-        path = args.pop("path")
-        restore(path)
+        restore(args.path)
 
-    human_time(t_start, timer())
-
-    adb_kill()
+    adb.stop_server()
 
 
 if __name__ == "__main__":
     args = parse_args()
+
     try:
         main(args)
     except KeyboardInterrupt:

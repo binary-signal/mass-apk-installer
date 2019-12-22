@@ -1,61 +1,56 @@
+from typing import Union, NoReturn
 import os
 import subprocess
-
-from mass_apk.adb import Adb
-from mass_apk.helpers import OS
+import time
+from mass_apk import adb, logger as log
 from mass_apk.adb import AdbError
-# Flags for adb list packages
+from mass_apk.helpers import OS
+import collections
 
-adb = Adb()
 
-def get_package_full_path(pkg_name):
+class ApkError(AdbError):
+    pass
+
+
+"""
+list packages [-f] [-d] [-e] [-s] [-3] [-i] [-l] [-u] [-U]
+      [--show-versioncode] [--apex-only] [--uid UID] [--user USER_ID] [FILTER]
+    Prints all packages; optionally only those whose name contains
+    the text in FILTER.  Options are:
+      -f: see their associated file
+      -a: all known packages (but excluding APEXes)
+      -d: filter to only show disabled packages
+      -e: filter to only show enabled packages
+      -s: filter to only show system packages
+      -3: filter to only show third party packages
+      -i: see the installer for the packages
+      -l: ignored (used for compatibility with older releases)
+      -U: also show the package UID
+      -u: also include uninstalled packages
+      --show-versioncode: also show the version code
+      --apex-only: only show APEX packages
+      --uid UID: filter to only show packages with the given UID
+      --user USER_ID: only list packages belonging to the given user
+"""
+
+
+def get_package_full_path(pkg_name: str) -> Union[str, NoReturn]:
     """
     Returns the full path of a package in android device storage
     """
 
-    global adb
     try:
-        state = adb_command(f"shell pm path {pkg_name}")
+        output = adb._exec_command(
+            f"shell pm path {pkg_name}", return_stdout=True, case_sensitive=True
+        )
     except AdbError as error:
+        log.error(error)
+        return
 
-    # adb returns packages name  in the form
+    # bin returns packages name  in the form
     # package:/data/app/com.dog.raider-2/base.apk
     # we need to strip package: prefix in returned string
 
-    return state.split(":")[1].strip()
-
-
-def package_management(PKG_FILTER):
-    """
-    Lists all packages installed  in android device. Results can be
-    filtered with PKG_FILTER to get only apk packages you are interested. By
-    default listing only 3d party apps.
-    """
-
-    state = adb_command(f"shell pm list packages {PKG_FILTER}")
-
-    # adb returns packages name  in the form
-    # package:com.skype.raider
-    # we need to strip "package:" prefix
-    return [
-        line.split(":")[1].strip()
-        for line in state.lower().splitlines()
-        if line.startswith("package:")
-    ]
-
-
-def pull_apk(pkg_dic):
-    """
-    Pulls apk specified in pkgDic variable from android device using adb
-    renames extracted apk to filename specified in pkgDic key value pair.
-    """
-
-    pkg_name = list(pkg_dic)
-
-
-    cmd = f" pull {pkg_dic[pkg_name[0]]}"
-
-    exit_code, output = subprocess.getstatusoutput(cmd)
-    if exit_code == 0:
-        if os.path.exists("base.apk"):
-            os.rename("base.apk", pkg_name[0] + ".apk")
+    if output:
+        return output.split(":", maxsplit=1)[1].strip()
+    log.warning(f"Failed to retrieve full path from device for `{pkg_name}`")

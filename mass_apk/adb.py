@@ -1,15 +1,16 @@
 from typing import List, Dict, Union, NoReturn
-import subprocess
-from functools import wraps
-import logging
 import os
-import inspect
+import functools
+import subprocess
+import logging
 from enum import Enum, unique
 
 from mass_apk.helpers import MASSAPK_OS, OS
 from mass_apk.exceptions import MassApkError
+from mass_apk import Apkitem
 
-_log = logging.getLogger(__name__)
+
+log = logging.getLogger(__name__)
 
 
 class AdbError(MassApkError):
@@ -31,40 +32,42 @@ class Adb(object):
     @unique
     class AdbFlag(Enum):
         # fmt:off
-        ALL = ""        # list all packages
-        USER = "-3"     # list 3d party packages only (default)
-        SYSTEM = "-S"   # list system packages only
+        ALL = ""  # list all packages
+        USER = "-3"  # list 3d party packages only (default)
+        SYSTEM = "-S"  # list system packages only
         # fmt:on
 
-    @staticmethod
     def compatibility(func):
         """Decorator for making `pull` commands compatible with linux and osx"""
 
-        @wraps(func)
-        def wrapper_compatibility(*args, **kwargs):
-            if func.__name__ == "pull":
-                if Adb._os != OS.WIN:
-                    cmd = kwargs.pop("cmd")
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                cmd: str = kwargs.pop("cmd")
+            except KeyError:
+                pass
+            else:
+                if "pull" in cmd and Adb._os != OS.WIN:
                     cmd = cmd.replace("pull", "shell cat")
                     cmd = f"{cmd} > base.apk"
                     kwargs.update({"cmd": cmd})
 
             return func(*args, **kwargs)
 
-        return wrapper_compatibility
+        return functools.update_wrapper(wrapper, func)
 
     @classmethod
     def _get_adb_path(cls) -> os.path:
         """Return adb path based on operating system detected during import"""
 
         if MASSAPK_OS == OS.OSX:
-            return os.path.join("adb", "osx", "adb")
+            return os.path.join("bin", "osx", "adb")
 
         elif MASSAPK_OS == OS.WIN:
-            return os.path.join("adb", "win", "adb.exe")
+            return os.path.join("bin", "win", "adb.exe")
 
         elif MASSAPK_OS == OS.LINUX:
-            return os.path.join("adb", "linux", "adb")
+            return os.path.join("bin", "linux", "adb")
 
     _os = MASSAPK_OS
 
@@ -89,47 +92,47 @@ class Adb(object):
 
     def _update_state(self) -> AdbState:
         """Checks if a android phone is connected to adb-server via cable."""
-        command_output = self._exec_command("get-state")
+        command_output = self._exec_command("get-state", return_stdout=True)
 
         if "error" not in command_output:
+            log.warning("No phone connected waiting to connect phone")
             self._state = self.__class__.AdbState.CONNECTED
 
         return self._state
 
     def start_server(self):
         """Starts adb-server process."""
+        log.info("Starting adb server...")
         self._exec_command("start-server")
 
     def stop_server(self):
         """Kills adb server."""
+        log.info("Killing adb server...")
         self._exec_command("kill-server")
 
     # TODO install and restore apks with generator
 
-    @compatibility
-    def _exec_command(self, cmd, return_stdout=False) -> Union[NoReturn, str]:
+    # @compatibility
+    def _exec_command(
+        self, cmd, return_stdout=False, case_sensitive=False
+    ) -> Union[NoReturn, str]:
         """Low level function to send shell commands to running adb-server process.
 
         :raises AdbError
         """
 
-        # frame hack to pull command and maintained a unified abstraction
-
-        # if "pull" in inspect.stack()[1].function:
-        #     if self.__class__._os != OS.WIN:
-        #         cmd = cmd.replace("pull", "shell cat")
-        #         cmd = f"{cmd} > base.apk"
-
         cmd = f"{self._path} {cmd}"
-
         return_code, output = subprocess.getstatusoutput(cmd)
-        output = output.lower()
+        # FIXME maybe need to remove lower case to preserve package names
 
-        if return_code != 0:
-            raise AdbError(output)
-        else:
-            if return_stdout:
-                return output
+        if return_code:
+            if output:
+                raise AdbError(output)
+
+            log.warning(f"command returned error code {return_code}, but no output")
+
+        if return_stdout:
+            return output.lower() if not case_sensitive else output
 
     def push(self, source_path, ignore_errors=True):
         """Pushes apk package to android device.
@@ -149,20 +152,13 @@ class Adb(object):
         try:
             self._exec_command(f"install -d  -r {source_path}")
         except AdbError as error:
-            _log.warning(repr(error))
+            log.warning(repr(error))
             if not ignore_errors:
                 raise error from None
 
-    def pull(self, pkg_dic, apk_name=None):
-        pkg_name = list(pkg_dic)
+    def pull(self, apk_path: str):
 
-        try:
-            self._exec_command(f" pull {pkg_dic[pkg_name[0]]}")
-        except AdbError as error:
-            _log.error(repr(error))
-        else:
-            if os.path.exists("base.apk"):
-                os.rename("base.apk", f"{pkg_name[0]}.apk")
+        self._exec_command(cmd=f" pull {apk_path}")
 
     def list_device(self, flag: AdbFlag):
         """Lists installed apk  packages on android device.
@@ -171,13 +167,18 @@ class Adb(object):
         you are interested. Defaults to list 3d party apps.
             """
 
-        output = self._exec_command(f"shell pm list packages {flag.value}")
+        log.info("Listing installed apk's in device...")
+        output = self._exec_command(
+            f"shell pm list packages {flag.value}",
+            return_stdout=True,
+            case_sensitive=True,
+        )
 
         # adb returns packages name  in the form
         # package:com.skype.raider
         # we need to strip "package:" prefix
         return [
-            line.split(":")[1].strip()
+            line.split(":", maxsplit=1)[1].strip()
             for line in output.splitlines()
             if line.startswith("package:")
         ]

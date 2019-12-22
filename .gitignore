@@ -99,3 +99,5 @@ ENV/
 .idea/mass-apk-installer.iml
 .idea/misc.xml
 /.idea/codeStyles/codeStyleConfig.xml
+/.idea/dictionaries/evan.xml
+/.idea/codeStyles/Project.xml
