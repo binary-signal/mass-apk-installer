@@ -4,7 +4,7 @@ import time
 import argparse
 
 
-from mass_apk import logger as log, adb
+from mass_apk import _logger as log, adb
 from mass_apk.commands import restore, back_up
 
 
@@ -20,8 +20,8 @@ def parse_args() -> argparse.Namespace:
     backup_sub.add_argument(
         "-f",
         "--flag",
-        type=adb.AdbFlag,
-        default=adb.AdbFlag.USER,
+        type=adb.Flag,
+        default=adb.Flag.USER,
         help="Specify which apks to backup. Defaults to  user apks."
         "Can be overriden to back up system apks with SYS or all apks with ALL",
     )

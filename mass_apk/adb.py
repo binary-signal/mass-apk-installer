@@ -1,4 +1,5 @@
-from typing import List, Dict, Union, NoReturn
+from typing import Union, NoReturn
+
 import os
 import functools
 import subprocess
@@ -72,7 +73,7 @@ class Adb(object):
 
     def __init__(self, auto_connect=False):
         self._path = self._get_adb_path()
-        self._state = self.__class__.AdbState.DISCONNECTED
+        self._state = self.__class__.State.DISCONNECTED
         if auto_connect:
             self.start_server()
 
@@ -95,7 +96,7 @@ class Adb(object):
 
         if "error" not in command_output:
             log.warning("No phone connected waiting to connect phone")
-            self._state = self.__class__.AdbState.CONNECTED
+            self._state = self.__class__.State.CONNECTED
 
         return self._state
 

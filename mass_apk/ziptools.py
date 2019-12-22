@@ -1,7 +1,7 @@
 import os
 import zipfile
 
-from mass_apk import logger as log
+from mass_apk import _logger as log
 
 __all__ = ["extract", "zipify"]
 
@@ -25,14 +25,14 @@ def zipify(src_path, dest_path):
                 abs_src = os.path.abspath(path)
 
                 apks = [file for file in os.listdir(abs_src) if file.endswith(".apk")]
-                apks_len = len(apks)
-
-                count = 0
 
                 for apk in apks:
+
                     # don't preserver folder structure inside zip file
                     absname = os.path.abspath(os.path.join(abs_src, apk))
                     arcname = absname[len(abs_src) + 1 :]
+
+                    log.info("Extracting path")
                     ofile.write(os.path.join(path, apk), arcname)
 
         dir_to_zip(src_path, zip_file)
@@ -52,8 +52,8 @@ def extract(zip_file, output):
 
             def __iter__(self):
                 iter_abl = iter(self.zip_obj.namelist())
-                for item in iter_abl:
-                    yield item
+                for val in iter_abl:
+                    yield val
 
         for item in ZipItemsIter(zip):
             try:

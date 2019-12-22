@@ -1,27 +1,22 @@
-from typing import List, Dict, Union
-import os
-import logging
-import sys
-import argparse
+from typing import List
 
-import time
-import datetime as dt
+import os
+import sys
 import shutil
 from timeit import default_timer as timer
 
-from mass_apk import logger as log
+from mass_apk import _logger as log
 from mass_apk import adb
 from mass_apk.apk import absolute_path
 from mass_apk import AbsPath
-from mass_apk.helpers import human_time, rename_fix, timed
+from mass_apk.helpers import timed
 from mass_apk.ziptools import extract, zipify
 from mass_apk.apk import AdbError
 from mass_apk.exceptions import MassApkFileNotFoundError
 
 
 @timed
-def back_up(args: os.path, list_flag: adb.AdbFlag, archive=False):
-    t_start = timer()
+def back_up(args: os.path, list_flag: adb.Flag, archive=False):
 
     # get user installed packages
     pkgs = adb.list_device(list_flag)
@@ -78,7 +73,7 @@ def restore(backup_path: os.path, clean: bool):
             f"Oups, the path for back file or folder ` {backup_path}` is missing !"
         )
 
-    clean_todo = list()  # keep track of files/dir to delete before returning
+    cleanup_todo = list()  # keep track of files/dir to delete before returning
 
     if os.path.isdir(backup_path):  # restore folder back up
         log.info(f"Restoring back up from path `{backup_path}` *  *Folder*")
@@ -92,7 +87,7 @@ def restore(backup_path: os.path, clean: bool):
             log.info(f"Restoring back up from path {backup_path} *  *Zip*")
             extract(zip_file=backup_path, output=extract_to)
             root_dir_back_up = extract_to  # set as path root the folder with apk extracted from zip file
-            clean_todo = list([extract_to, backup_path])
+            cleanup_todo = list([extract_to, backup_path])
 
     if root_dir_back_up is None:
         log.error(f"Oups not possible to extract zip file to path {extract_to} ")
@@ -112,7 +107,7 @@ def restore(backup_path: os.path, clean: bool):
     if clean:
 
         map(
-            lambda f: shutil.rmtree(f) if os.path.isdir(f) else os.remove(f), clean_todo
+            lambda f: shutil.rmtree(f) if os.path.isdir(f) else os.remove(f), cleanup_todo
         )
 
     log.info("Restore  done")

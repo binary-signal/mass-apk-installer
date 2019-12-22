@@ -1,6 +1,6 @@
 from typing import Union, NoReturn
 
-from mass_apk import adb, logger as log
+from mass_apk import adb, _logger as log
 from mass_apk.adb import AdbError
 
 
