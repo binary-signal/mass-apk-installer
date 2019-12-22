@@ -23,14 +23,14 @@ class ApkAlreadyExists(AdbError):
 
 class Adb(object):
     @unique
-    class AdbState(Enum):
+    class State(Enum):
         """Define adb-server state enum"""
 
         CONNECTED = True
         DISCONNECTED = False
 
     @unique
-    class AdbFlag(Enum):
+    class Flag(Enum):
         # fmt:off
         ALL = ""  # list all packages
         USER = "-3"  # list 3d party packages only (default)
@@ -82,7 +82,7 @@ class Adb(object):
         return self._path
 
     @property
-    def state(self) -> AdbState:
+    def state(self) -> State:
         """
         Gets the state of adb server
 
@@ -90,7 +90,7 @@ class Adb(object):
         """
         return self._update_state()
 
-    def _update_state(self) -> AdbState:
+    def _update_state(self) -> State:
         """Checks if a android phone is connected to adb-server via cable."""
         command_output = self._exec_command("get-state", return_stdout=True)
 
@@ -110,9 +110,6 @@ class Adb(object):
         log.info("Killing adb server...")
         self._exec_command("kill-server")
 
-    # TODO install and restore apks with generator
-
-    # @compatibility
     def _exec_command(
         self, cmd, return_stdout=False, case_sensitive=False
     ) -> Union[NoReturn, str]:
@@ -160,7 +157,7 @@ class Adb(object):
 
         self._exec_command(cmd=f" pull {apk_path}")
 
-    def list_device(self, flag: AdbFlag):
+    def list_device(self, flag: Flag):
         """Lists installed apk  packages on android device.
 
         Results can be filtered with PKG_FILTER to get only apk packages
