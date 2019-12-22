@@ -16,7 +16,12 @@ from mass_apk.exceptions import MassApkFileNotFoundError
 
 
 @elapsed_time
-def back_up(args: os.path, list_flag: adb.Flag, archive=False):
+def back_up(path: os.path, list_flag: adb.Flag, archive=False):
+
+    try:
+        os.makedirs(path)
+    except FileExistsError as error:
+        log.warning("Back up destination already exists ")
 
     # get user installed packages
     pkgs = adb.list_device(list_flag)
@@ -43,15 +48,15 @@ def back_up(args: os.path, list_flag: adb.Flag, archive=False):
                 # time to use a handy AbsPath named tuple to set correct name to apk pulled with adb
 
                 # this is the correct name of the apk relative to the filesystem
-                dest = os.path.join(args.path, f"{apk_item.name}.apk")
+                dest = os.path.join(path, f"{apk_item.name}.apk")
                 shutil.move(f"base.apk", dest)
             else:
                 log.warning("file base.apk doesn't exist - {apk_item.name}.apk ")
 
     if archive:
-        log.info(f"Creating zip archive: {args.path}.zip, this may take a while")
-        zipify(args.path, args.path + ".zip")
-        shutil.rmtree(args.path)
+        log.info(f"Creating zip archive: {path}.zip, this may take a while")
+        zipify(path, path + ".zip")
+        shutil.rmtree(path)
 
     log.info("Back up done.")
 

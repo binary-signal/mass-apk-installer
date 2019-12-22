@@ -6,7 +6,7 @@ import subprocess
 import logging
 from enum import Enum, unique
 
-from mass_apk.helpers import detect_platform, PLATFORM
+from mass_apk.helpers import runtime_platform, PLATFORM
 from mass_apk.exceptions import MassApkError
 from mass_apk import pkg_root
 
@@ -60,17 +60,16 @@ class Adb(object):
     def _get_adb_path(cls) -> os.path:
         """Return adb path based on operating system detected during import"""
 
-        if detect_platform == PLATFORM.OSX:
+        if runtime_platform == PLATFORM.OSX:
 
             return os.path.join(pkg_root, "bin", "osx", "adb")
 
-        elif detect_platform == PLATFORM.WIN:
+        elif runtime_platform == PLATFORM.WIN:
             return os.path.join(pkg_root, "bin", "win", "adb.exe")
 
-        elif detect_platform == PLATFORM.LINUX:
+        elif runtime_platform == PLATFORM.LINUX:
             return os.path.join(pkg_root, "bin", "linux", "adb")
 
-    _os = detect_platform
 
     def __init__(self, auto_connect=False):
         self._path = self._get_adb_path()
