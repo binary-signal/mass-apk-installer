@@ -4,7 +4,7 @@ import time
 import argparse
 
 
-from mass_apk import _logger as log, adb
+from mass_apk import _logger as log, adb, __verion__
 from mass_apk.commands import restore, back_up
 
 
@@ -61,9 +61,6 @@ def parse_args() -> argparse.Namespace:
 
 
 def main(args: argparse.Namespace):
-
-    log.info("Apk Mass Installer Utility Version: 0.3.1\n")
-
     # kill any instances of adb-server before starting
     adb.stop_server()
 
@@ -84,8 +81,9 @@ def main(args: argparse.Namespace):
 
 
 if __name__ == "__main__":
-    args = parse_args()
 
+    args = parse_args()
+    log.info(f"Apk Mass Installer Utility Version: {__verion__}")
     try:
         main(args)
     except KeyboardInterrupt:
