@@ -6,9 +6,9 @@ import subprocess
 import logging
 from enum import Enum, unique
 
-from mass_apk.helpers import MASSAPK_OS, OS
+from mass_apk.helpers import detect_platform, PLATFORM
 from mass_apk.exceptions import MassApkError
-
+from mass_apk import pkg_root
 
 log = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class Adb(object):
             except KeyError:
                 pass
             else:
-                if "pull" in cmd and Adb._os != OS.WIN:
+                if "pull" in cmd and Adb._os != PLATFORM.WIN:
                     cmd = cmd.replace("pull", "shell cat")
                     cmd = f"{cmd} > base.apk"
                     kwargs.update({"cmd": cmd})
@@ -60,16 +60,17 @@ class Adb(object):
     def _get_adb_path(cls) -> os.path:
         """Return adb path based on operating system detected during import"""
 
-        if MASSAPK_OS == OS.OSX:
-            return os.path.join("bin", "osx", "adb")
+        if detect_platform == PLATFORM.OSX:
 
-        elif MASSAPK_OS == OS.WIN:
-            return os.path.join("bin", "win", "adb.exe")
+            return os.path.join(pkg_root, "bin", "osx", "adb")
 
-        elif MASSAPK_OS == OS.LINUX:
-            return os.path.join("bin", "linux", "adb")
+        elif detect_platform == PLATFORM.WIN:
+            return os.path.join(pkg_root, "bin", "win", "adb.exe")
 
-    _os = MASSAPK_OS
+        elif detect_platform == PLATFORM.LINUX:
+            return os.path.join(pkg_root, "bin", "linux", "adb")
+
+    _os = detect_platform
 
     def __init__(self, auto_connect=False):
         self._path = self._get_adb_path()
@@ -111,8 +112,8 @@ class Adb(object):
         self._exec_command("kill-server")
 
     def _exec_command(
-        self, cmd, return_stdout=False, case_sensitive=False
-    ) -> Union[NoReturn, str]:
+            self, cmd, return_stdout=False, case_sensitive=False
+            ) -> Union[NoReturn, str]:
         """Low level function to send shell commands to running adb-server process.
 
         :raises AdbError
@@ -187,16 +188,16 @@ class Adb(object):
 
         log.info("Listing installed apk's in device...")
         output = self._exec_command(
-            f"shell pm list packages {flag.value}",
-            return_stdout=True,
-            case_sensitive=True,
-        )
+                f"shell pm list packages {flag.value}",
+                return_stdout=True,
+                case_sensitive=True,
+                )
 
         # adb returns packages name  in the form
         # package:com.skype.raider
         # we need to strip "package:" prefix
         return [
-            line.split(":", maxsplit=1)[1].strip()
-            for line in output.splitlines()
-            if line.startswith("package:")
-        ]
+                line.split(":", maxsplit=1)[1].strip()
+                for line in output.splitlines()
+                if line.startswith("package:")
+                ]

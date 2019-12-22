@@ -9,13 +9,13 @@ from mass_apk import _logger as log
 from mass_apk import adb
 from mass_apk.apk import absolute_path
 from mass_apk import AbsPath
-from mass_apk.helpers import timed
+from mass_apk.helpers import elapsed_time
 from mass_apk.ziptools import extract, zipify
 from mass_apk.apk import AdbError
 from mass_apk.exceptions import MassApkFileNotFoundError
 
 
-@timed
+@elapsed_time
 def back_up(args: os.path, list_flag: adb.Flag, archive=False):
 
     # get user installed packages
@@ -56,7 +56,7 @@ def back_up(args: os.path, list_flag: adb.Flag, archive=False):
     log.info("Back up done.")
 
 
-@timed
+@elapsed_time
 def restore(backup_path: os.path, clean: bool):
     """
 

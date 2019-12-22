@@ -35,10 +35,10 @@ __version__ = "0.3.1"
 __author__ = "Evan @binary-signal"
 __license__ = 'MIT'
 
+import os
 import sys
 import logging
 import collections
-from mass_apk.helpers import OS
 
 
 def init_logging() -> logging.Logger:
@@ -56,8 +56,9 @@ def init_logging() -> logging.Logger:
 
 _logger = init_logging()
 
+pkg_root = os.path.abspath(__path__[0])
 AbsPath = collections.namedtuple("AbsPath", "name fullpath")
-
+from mass_apk.helpers import PLATFORM
 from .adb import Adb
 
 adb = Adb()
