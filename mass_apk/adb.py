@@ -31,14 +31,19 @@ class Adb(object):
 
     @unique
     class Flag(Enum):
+        """Define adb-server package management
+        supported flags for listing apks"""
+
         # fmt:off
-        ALL = ""  # list all packages
-        USER = "-3"  # list 3d party packages only (default)
-        SYSTEM = "-S"  # list system packages only
+        ALL = ""         # list all packages
+        USER = "-3"      # list 3d party packages only (default)
+        SYSTEM = "-S"    # list system packages only
         # fmt:on
 
     def compatibility(func):
-        """Decorator for making `pull` commands compatible with linux and osx"""
+        """Decorator for making `pull` commands compatible with linux and osx
+
+        This decorator is deprecated """
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -79,6 +84,7 @@ class Adb(object):
 
     @property
     def path(self):
+        """Get access to detected adb path"""
         return self._path
 
     @property
@@ -120,7 +126,6 @@ class Adb(object):
 
         cmd = f"{self._path} {cmd}"
         return_code, output = subprocess.getstatusoutput(cmd)
-        # FIXME maybe need to remove lower case to preserve package names
 
         if return_code:
             if output:
@@ -135,7 +140,7 @@ class Adb(object):
         """Pushes apk package to android device.
 
         Before calling `push` function make sure that function `connect` has been
-        called earlier and `self.state` returns `true`
+        called earlier and `self.state`  is ` connected`
 
         extra parameters are passed to adb-server in order to  avoid errors like the following
         faulty error messages:
@@ -154,7 +159,7 @@ class Adb(object):
                 raise error from None
 
     def pull(self, apk_path: str):
-
+        """Pull's an apk from the following path in android device."""
         self._exec_command(cmd=f" pull {apk_path}")
 
     def list_device(self, flag: Flag):

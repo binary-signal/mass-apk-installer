@@ -42,7 +42,7 @@ import collections
 
 
 def init_logging() -> logging.Logger:
-    """return an mass-apk logging object"""
+    """Inits a logger object for  mass-apk"""
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(
             logging.Formatter(fmt="%(name)-17s :: %(levelname)-7s - %(message)s")
@@ -57,7 +57,7 @@ def init_logging() -> logging.Logger:
 _logger = init_logging()
 
 pkg_root = os.path.abspath(__path__[0])
-AbsPath = collections.namedtuple("AbsPath", "name fullpath")
+ApkAbsPath = collections.namedtuple("ApkAbsPath", "name fullpath")
 from mass_apk.helpers import PLATFORM
 from .adb import Adb
 

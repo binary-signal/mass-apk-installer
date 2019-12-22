@@ -3,12 +3,11 @@ from typing import List
 import os
 import sys
 import shutil
-from timeit import default_timer as timer
 
 from mass_apk import _logger as log
 from mass_apk import adb
 from mass_apk.apk import absolute_path
-from mass_apk import AbsPath
+from mass_apk import ApkAbsPath
 from mass_apk.helpers import elapsed_time
 from mass_apk.ziptools import extract, zipify
 from mass_apk.apk import AdbError
@@ -20,7 +19,7 @@ def back_up(path: os.path, list_flag: adb.Flag, archive=False):
 
     try:
         os.makedirs(path)
-    except FileExistsError as error:
+    except FileExistsError:
         log.warning("Back up destination already exists ")
 
     # get user installed packages
@@ -30,9 +29,9 @@ def back_up(path: os.path, list_flag: adb.Flag, archive=False):
     # get full path on the android filesystem for each installed package
     abs_paths = [(pkg, absolute_path(pkg)) for pkg in pkgs if absolute_path(pkg)]
 
-    # pack apk name and apk full path  into a AbsPath named tuple, makes more sense to carry
+    # pack apk name and apk full path  into an ApkAbsPath named tuple, makes more sense to carry
     # these two variables together from now on through the back up,  comes handy
-    parsed_paths: List[AbsPath] = [AbsPath(*abs_path) for abs_path in abs_paths]
+    parsed_paths: List[ApkAbsPath] = [ApkAbsPath(*abs_path) for abs_path in abs_paths]
 
     log.info(f"Found {len(parsed_paths)} installed packages")
     for progress, apk_item in enumerate(parsed_paths, 1):

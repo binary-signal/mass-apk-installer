@@ -9,12 +9,12 @@ from mass_apk.commands import restore, back_up
 
 def parse_args() -> argparse.Namespace:
     """Argument parser for mass-apk"""
-    parser = argparse.ArgumentParser(prog="mass_apk")
+    parser = argparse.ArgumentParser(prog="mass-apk")
     subparsers = parser.add_subparsers(
             title="commands", dest="command", required=True, help="help for commands"
             )
 
-    # create sub parser for the "backup" command
+    # create sub parser for "backup" command
     backup_sub = subparsers.add_parser("backup", help="backup help")
     backup_sub.add_argument(
             "-f",
@@ -22,7 +22,6 @@ def parse_args() -> argparse.Namespace:
             type=adb.Flag,
             default=adb.Flag.USER,
             help="Specify which apks to backup. Defaults to  user apks."
-                 "Can be overriden to back up system apks with SYS or all apks with ALL",
             )
 
     backup_sub.add_argument(
@@ -30,7 +29,7 @@ def parse_args() -> argparse.Namespace:
             "--path",
             type=str,
             default=os.getcwd(),
-            help="Folder or Path on filesystem to save back up",
+            help="Folder or Path on filesystem for saving back up",
             )
     backup_sub.add_argument(
             "-a",
@@ -39,7 +38,7 @@ def parse_args() -> argparse.Namespace:
             help="compress back up folder into zip file",
             )
 
-    # create the parser for the "restore" command
+    # create the parser for "restore" command
     restore_sub = subparsers.add_parser("restore", help="help for restore")
     restore_sub.add_argument(
             "-p",
@@ -53,14 +52,13 @@ def parse_args() -> argparse.Namespace:
             "-c",
             "--clean",
             action="store_true",
-            help="remove back up File or Folder defined in --path after restoration is completed ",
+            help="remove back up File or Folder defined in --path after restoring",
             )
 
     return parser.parse_args()
 
 
 def main(args: argparse.Namespace):
-    # kill any instances of adb-server before starting
     adb.stop_server()
 
     # wait for adb-server to detect phone
@@ -80,7 +78,6 @@ def main(args: argparse.Namespace):
 
 
 if __name__ == "__main__":
-
     args = parse_args()
     log.info(f"Apk Mass Installer Utility Version: {__version__}")
     try:
