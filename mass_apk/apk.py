@@ -34,7 +34,7 @@ list packages [-f] [-d] [-e] [-s] [-3] [-i] [-l] [-u] [-U]
 """
 
 
-def get_package_full_path(pkg_name: str) -> Union[str, NoReturn]:
+def absolute_path(pkg_name: str) -> Union[str, NoReturn]:
     """
     Returns the full path of a package in android device storage
     """

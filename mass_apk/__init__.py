@@ -49,7 +49,7 @@ logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
 
-Apkitem = collections.namedtuple("Apkitem", "name fullpath")
+AbsPath = collections.namedtuple("AbsPath", "name fullpath")
 
 
 from mass_apk.adb import Adb

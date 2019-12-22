@@ -11,15 +11,16 @@ from timeit import default_timer as timer
 
 from mass_apk import logger as log
 from mass_apk import adb
-from mass_apk.apk import get_package_full_path
-from mass_apk import Apkitem
+from mass_apk.apk import absolute_path
+from mass_apk import AbsPath
 from mass_apk.helpers import human_time, rename_fix, timed
-from mass_apk.ziptools import extract_zip, make_zip
+from mass_apk.ziptools import extract, zipify
 from mass_apk.apk import AdbError
+from mass_apk.exceptions import MassApkFileNotFoundError
 
 
 @timed
-def back_up(path, list_flag: adb.AdbFlag, archive=False):
+def back_up(path: os.path, list_flag: adb.AdbFlag, archive=False):
     t_start = timer()
 
     # get user installed packages
@@ -27,99 +28,104 @@ def back_up(path, list_flag: adb.AdbFlag, archive=False):
 
     log.info("Discovering apk paths, this may take a while...")
     # get full path on the android filesystem for each installed package
-    pkg_paths = list()
-    for pkg in pkgs:
-        if path := get_package_full_path(pkg):
-            pkg_paths.append((pkg, path))
+    abs_paths = [(pkg, absolute_path(pkg)) for pkg in pkgs if absolute_path(pkg)]
 
-    # map apk name and apk path
-    mapped_pkg: List[Apkitem] = [Apkitem(*p) for p in pkg_paths]
+    # pack apk name and apk full path  into a AbsPath named tuple, makes more sense to carry
+    # these two variables together from now on through the back up,  comes handy
+    parsed_paths: List[AbsPath] = [AbsPath(*abs_path) for abs_path in abs_paths]
 
-    log.info(f"Found {len(mapped_pkg)} installed packages")
-    for progress, apk_item in enumerate(mapped_pkg, 1):
-        log.info(f"[{progress:4}/{len(mapped_pkg):4}] pulling ... {apk_item.name}")
+    log.info(f"Found {len(parsed_paths)} installed packages")
+    for progress, apk_item in enumerate(parsed_paths, 1):
+        log.info(f"[{progress:4}/{len(parsed_paths):4}] pulling ... {apk_item.name}")
         try:
             adb.pull(apk_item.fullpath)  # get apk from device
         except AdbError:
-            pass
+            log.error(f"Meow here is a warning for `{apk_item.name}` apk")
         # move apk to back up directory
         else:
             if os.path.exists("base.apk"):
+                # all apks retrieved with adb are saved under the same name,  `base.apk`
+                # time to use a handy AbsPath named tuple to set correct name to apk pulled with adb
+
+                # this is the correct name of the apk relative to the filesystem
                 dest = os.path.join(args.path, f"{apk_item.name}.apk")
                 shutil.move(f"base.apk", dest)
             else:
-                log.warning("file base.apk not found")
+                log.warning("file base.apk doesn't exist - {apk_item.name}.apk ")
 
     if archive:
         log.info(f"Creating zip archive: {args.path}.zip, this may take a while")
-        make_zip(args.path, args.path + ".zip")
+        zipify(args.path, args.path + ".zip")
         shutil.rmtree(args.path)
 
     log.info("Back up done.")
 
 
-def restore(backup_path):
-    t_start = timer()
-    clean_up = []  # list of files, dirs to delete after install
+@timed
+def restore(backup_path: os.path, clean: bool):
+    """
 
-    if not os.path.exists(backup_path):
-        raise FileNotFoundError(f"File or folder doesn't exist {backup_path}")
+    :param backup_path:
+    :param clean:bool delete folder or files used by restore command before function returns
+    :return: None
 
-    if os.path.isdir(backup_path):  # install from folder
-        print(f"\nRestoring back up from folder: {backup_path}")
-        apk_path = backup_path
-
-    elif os.path.isfile(backup_path):  # install from file
-        filename, file_extension = os.path.splitext(backup_path)
-
-        if ".zip" in file_extension:  # install from zip archive
-            print(f"\nRestoring back up from zip file: {backup_path}")
-            print(f"\nUnzipping {backup_path} ...")
-            extract_zip(backup_path, filename)
-            apk_path = filename
-            clean_up.append(filename)
-
+    :raises MassApkFileNotFoundError
+    """
     try:
-        rename_fix(apk_path)
-        apks = [file for file in os.listdir(apk_path) if file.endswith(".apk")]
-    except NotADirectoryError:
-        print(f"isn't a dir {apk_path}")
-        return
+        os.path.exists(backup_path)
+    except FileNotFoundError as error:
+        raise MassApkFileNotFoundError(
+            f"Oups, the path for back file or folder ` {backup_path}` is missing !"
+        )
+
+    clean_todo = list()  # keep track of files/dir to delete before returning
+
+    if os.path.isdir(backup_path):  # restore folder back up
+        log.info(f"Restoring back up from path `{backup_path}` *  *Folder*")
+        root_dir_back_up = backup_path
+
+    else:
+        root_dir_back_up = None  # we don't yet if that path will have value
+        extract_to = os.path.splitext(backup_path)[0]
+
+        if backup_path.endswith(".zip"):  # restore zip archive back up
+            log.info(f"Restoring back up from path {backup_path} *  *Zip*")
+            extract(zip_file=backup_path, output=extract_to)
+            root_dir_back_up = extract_to  # set as path root the folder with apk extracted from zip file
+            clean_todo = list([extract_to, backup_path])
+
+    if root_dir_back_up is None:
+        log.error(f"Oups not possible to extract zip file to path {extract_to} ")
+        sys.exit(-1)
+
+    apks = [file for file in os.listdir(root_dir_back_up) if file.endswith(".apk")]
 
     # calculate total installation size
-    size = [os.path.getsize(os.path.join(apk_path, apk)) for apk in apks]
+    size = [os.path.getsize(os.path.join(root_dir_back_up, apk)) for apk in apks]
 
     log.info("Total Installation Size: {0:.2f} MB".format(sum(size) / (1024 * 1024)))
-    state = []
 
     for progress, apk in enumerate(apks, 1):
-        print(
-            "[{0:{space}d}/{1:{space}d}] Installing {2}".format(
-                progress, len(apks), str(apk)
-            )
+        log.info(f"[{progress}/{len(apks)}] Installing {apk}")
+        # adb.push(os.path.join(root_dir_back_up, apk))
+
+    if clean:
+
+        map(
+            lambda f:  shutil.rmtree(f) if os.path.isdir(f) else os.remove(f), clean_todo
         )
-        s = adb.push(os.path.join(apk_path, apk))
-        state.append(s)
 
-    for f in clean_up:
-        if os.path.exists(f):
-            if os.path.isdir(f):
-                shutil.rmtree(f)
-            elif os.path.isfile(f):
-                os.remove(f)
-    human_time(t_start, timer())
-    print("\nRestore  finished")
+    log.info("Restore  done")
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     # create the top-level parser
-    parser = argparse.ArgumentParser(prog="massapk")
-    parser.add_argument("--foo", action="store_true", help="help for foo arg.")
+    parser = argparse.ArgumentParser(prog="mass_apk")
     subparsers = parser.add_subparsers(
-        title="commands", dest="command", help="help for commands", required=True
+        title="commands", dest="command", required=True, help="help for commands"
     )
 
-    # create the parser for the "backup" command
+    # create sub parser for the "backup" command
     backup_sub = subparsers.add_parser("backup", help="backup help")
     backup_sub.add_argument(
         "-f",
@@ -147,16 +153,26 @@ def parse_args():
     # create the parser for the "restore" command
     restore_sub = subparsers.add_parser("restore", help="help for restore")
     restore_sub.add_argument(
-        "-p", "--path", type=str, help="Back up File or Folder to restore from"
+        "-p",
+        "--path",
+        type=str,
+        required=True,
+        help="Back up File or Folder to restore from",
     )
 
-    args = parser.parse_args()
-    return args
+    restore_sub.add_argument(
+        "-c",
+        "--clean",
+        action="store_true",
+        help="remove back up File or Folder defined in --path after restoration is completed ",
+    )
+
+    return parser.parse_args()
 
 
-def main(args):
-    print(args)
-    print("Apk Mass Installer Utility \nVersion: 0.3.1\n")
+def main(args: argparse.Namespace):
+
+    log.info("Apk Mass Installer Utility Version: 0.3.1\n")
 
     adb.stop_server()  # kill any instances of bin before starting if any
 
@@ -164,27 +180,16 @@ def main(args):
     while not (state := adb.state):
         time.sleep(1)
 
-    adb.start_server()  # start an instance of bin server
+    adb.start_server()  # start an instance of adb server
 
-    if command := args.command == "backup":
-        try:
-            os.mkdir(args.path)
-        except FileExistsError:
-            log.warning("Back up destination already exists !")
-
+    if args.command == "backup":
         back_up(args.path, args.flag, args.archive)
 
-    elif command == "restore":
-        try:
-            os.path.exists(args.path)
-        except FileNotFoundError:
-            log.error(
-                f"Back Folder or Path doesn't exit. Path {(os.path.abspath(args.path))}"
-            )
-            sys.exit(-1)
+    elif args.command == "restore":
+        restore(args.path, args.clean)
 
-        restore(args.path)
-
+    else:
+        sys.exit(f"Unknown command {args.command}")
     adb.stop_server()
 
 
@@ -194,4 +199,4 @@ if __name__ == "__main__":
     try:
         main(args)
     except KeyboardInterrupt:
-        print("Received Interrupt")
+        log.info("Received SIGINT. Quit")

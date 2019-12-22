@@ -7,7 +7,7 @@ from enum import Enum, unique
 
 from mass_apk.helpers import MASSAPK_OS, OS
 from mass_apk.exceptions import MassApkError
-from mass_apk import Apkitem
+from mass_apk import AbsPath
 
 
 log = logging.getLogger(__name__)

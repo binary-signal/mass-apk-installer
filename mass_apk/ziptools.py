@@ -3,7 +3,7 @@ import zipfile
 
 from mass_apk import logger as log
 
-__all__ = ["extract_zip", "make_zip"]
+__all__ = ["extract", "zipify"]
 
 
 def print_info(archive_name):
@@ -12,36 +12,33 @@ def print_info(archive_name):
         print(info.filename)
 
 
-def zipdir(path, zipf):
-    if os.path.isdir(path):
-        files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
-        abs_src = os.path.abspath(path)
-        apks = []
-        for file in files:
-            if file.endswith(".apk"):
-                apks.append(file)
+def zipify(src_path, dest_path):
+    with zipfile.ZipFile(dest_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
 
-        iteration = len(apks)
+        def dir_to_zip(path, ofile: zipfile.ZipFile = zip_file):
+            if os.path.isdir(path):
+                files = [
+                    file
+                    for file in os.listdir(path)
+                    if os.path.isfile(file) and file.endswith(".zip")
+                ]
+                abs_src = os.path.abspath(path)
 
-        count = 0
+                apks = [file for file in os.listdir(abs_src) if file.endswith(".apk")]
+                apks_len = len(apks)
 
-        for apk in apks:
-            # don't preserver folder structure inside zip file
-            absname = os.path.abspath(os.path.join(path, apk))
-            arcname = absname[len(abs_src) + 1 :]
-            zipf.write(os.path.join(path, apk), arcname)
+                count = 0
 
-            # update progress bar
-            count += 1
+                for apk in apks:
+                    # don't preserver folder structure inside zip file
+                    absname = os.path.abspath(os.path.join(abs_src, apk))
+                    arcname = absname[len(abs_src) + 1 :]
+                    ofile.write(os.path.join(path, apk), arcname)
 
-
-def make_zip(path, output):
-    zipf = zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED)
-    zipdir(path, zipf)
-    zipf.close()
+        dir_to_zip(src_path, zip_file)
 
 
-def extract_zip(zip_file, output):
+def extract(zip_file, output):
     if zipfile.is_zipfile(zip_file):
         zip = zipfile.ZipFile(zip_file, "r")
 
@@ -49,17 +46,17 @@ def extract_zip(zip_file, output):
         if not os.path.exists(output):
             os.makedirs(output)
 
-        iteration = len(zip.namelist())
+        class ZipItemsIter:
+            def __init__(self, zip_obj):
+                self.zip_obj = zip_obj
 
-        count = 0
+            def __iter__(self):
+                iter_abl = iter(self.zip_obj.namelist())
+                for item in iter_abl:
+                    yield item
 
-        # extract files
-        for filename in zip.namelist():
+        for item in ZipItemsIter(zip):
             try:
-                zip.extract(filename, output)
-
-                # update progress bar
-                count += 1
-
+                zip.extract(item, output)
             except KeyError:
-                log.error("Didn't find {} in zip file".format(filename))
+                log.error("Didn't find {} in zip file".format(item))
