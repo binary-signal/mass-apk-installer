@@ -1,7 +1,7 @@
 """
  Author:      Evan
  Created:     19/10/2011
- Last Modified: 22/12/2020
+ Last Modified: 13/03/2020
  Licence:   MIT
 
  Copyright (c) 2021, Evan
@@ -12,7 +12,7 @@
      * Redistributions of source code must retain the above copyright
        notice, this list of conditions and the following disclaimer.
      * Redistributions in binary form must reproduce the above copyright
-       notice, this list of conditions and the following disclaimer in the
+       notice, this list of conditions, and the following disclaimer in the
        documentation and/or other materials provided with the distribution.
      * Neither the name of the <organization> nor the
        names of its contributors may be used to endorse or promote products
@@ -30,10 +30,10 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  """
 
-__title__ = 'mass-apk'
+__title__ = "mass-apk"
 __version__ = "0.3.1"
 __author__ = "Evan @binary-signal"
-__license__ = 'MIT'
+__license__ = "MIT"
 
 import os
 import sys
@@ -41,14 +41,16 @@ import logging
 import collections
 
 
-def init_logging() -> logging.Logger:
-    """Inits a logger object for  mass-apk"""
+def init_logging(log_level: int = logging.INFO) -> logging.Logger:
+    """Creates `mass-apk` logger
+
+    Create a module wide logger instance."""
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(
-            logging.Formatter(fmt="%(name)-17s :: %(levelname)-7s - %(message)s")
-            )
+        logging.Formatter(fmt="%(name)-17s :: %(levelname)-7s - %(message)s")
+    )
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(log_level)
     logger.addHandler(handler)
 
     return logger
@@ -58,7 +60,11 @@ _logger = init_logging()
 
 pkg_root = os.path.abspath(__path__[0])
 ApkAbsPath = collections.namedtuple("ApkAbsPath", "name fullpath")
-from mass_apk.helpers import PLATFORM
+
+# make platform variable available during import time
+from .helpers import detect_platform
+runtime_platform = detect_platform()
+
 from .adb import Adb
 
 adb = Adb()

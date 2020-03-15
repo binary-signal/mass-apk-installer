@@ -4,14 +4,13 @@ import os
 import sys
 import shutil
 
-from mass_apk import _logger as log
-from mass_apk import adb
-from mass_apk.apk import absolute_path
-from mass_apk import ApkAbsPath
-from mass_apk.helpers import elapsed_time
-from mass_apk.ziptools import extract, zipify
-from mass_apk.apk import AdbError
-from mass_apk.exceptions import MassApkFileNotFoundError
+
+from massapk import adb, ApkAbsPath
+from massapk import _logger as log
+from massapk.apk import absolute_path, AdbError
+from massapk.exceptions import MassApkFileNotFoundError
+from massapk.helpers import elapsed_time
+from massapk.ziptools import unzippify, zipify
 
 
 @elapsed_time
@@ -79,7 +78,7 @@ def restore(backup_path: os.path, clean: bool):
 
     cleanup_todo = list()  # keep track of files/dir to delete before returning
 
-    if os.path.isdir(backup_path):  # restore folder back up
+    if os.path.isdir(backup_path):  # restore a folder back up
         log.info(f"Restoring back up from path `{backup_path}` *  *Folder*")
         root_dir_back_up = backup_path
 
@@ -87,9 +86,9 @@ def restore(backup_path: os.path, clean: bool):
         root_dir_back_up = None  # we don't yet if that path will have value
         extract_to = os.path.splitext(backup_path)[0]
 
-        if backup_path.endswith(".zip"):  # restore zip archive back up
+        if backup_path.endswith(".zip"):  # restore a zip archive back up
             log.info(f"Restoring back up from path {backup_path} *  *Zip*")
-            extract(zip_file=backup_path, output=extract_to)
+            unzippify(zip_file=backup_path, output=extract_to)
             root_dir_back_up = extract_to  # set as path root the folder with apk extracted from zip file
             cleanup_todo = list([extract_to, backup_path])
 

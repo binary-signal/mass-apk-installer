@@ -1,9 +1,9 @@
 import os
 import zipfile
 
-from mass_apk import _logger as log
+from massapk import _logger as log
 
-__all__ = ["extract", "zipify"]
+__all__ = ["unzippify", "zipify"]
 
 
 def print_info(archive_name):
@@ -38,7 +38,7 @@ def zipify(src_path, dest_path):
         dir_to_zip(src_path, zip_file)
 
 
-def extract(zip_file, output):
+def unzippify(zip_file, output):
     if zipfile.is_zipfile(zip_file):
         zip = zipfile.ZipFile(zip_file, "r")
 

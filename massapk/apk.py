@@ -1,7 +1,7 @@
 from typing import Union, NoReturn
 
-from mass_apk import adb, _logger as log
-from mass_apk.adb import AdbError
+from massapk import adb, _logger as log
+from massapk.adb import AdbError
 
 
 class ApkError(AdbError):
@@ -21,7 +21,7 @@ def absolute_path(pkg_name: str) -> Union[str, NoReturn]:
         log.error(error)
         return
 
-    # bin returns packages name  in the form
+    # bin returns packages name in the form
     # package:/data/app/com.dog.raider-2/base.apk
     # we need to strip package: prefix in returned string
 

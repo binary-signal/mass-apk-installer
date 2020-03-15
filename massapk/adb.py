@@ -6,9 +6,10 @@ import subprocess
 import logging
 from enum import Enum, unique
 
-from mass_apk.helpers import runtime_platform, PLATFORM
-from mass_apk.exceptions import MassApkError
-from mass_apk import pkg_root
+from massapk import runtime_platform, pkg_root
+from massapk.exceptions import MassApkError
+from massapk.helpers import PLATFORM
+
 
 log = logging.getLogger(__name__)
 
@@ -40,27 +41,6 @@ class Adb(object):
         SYSTEM = "-S"    # list system packages only
         # fmt:on
 
-    def compatibility(func):
-        """Decorator for making `pull` commands compatible with linux and osx
-
-        This decorator is deprecated """
-
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            try:
-                cmd: str = kwargs.pop("cmd")
-            except KeyError:
-                pass
-            else:
-                if "pull" in cmd and Adb._os != PLATFORM.WIN:
-                    cmd = cmd.replace("pull", "shell cat")
-                    cmd = f"{cmd} > base.apk"
-                    kwargs.update({"cmd": cmd})
-
-            return func(*args, **kwargs)
-
-        return functools.update_wrapper(wrapper, func)
-
     @classmethod
     def _get_adb_path(cls) -> os.path:
         """Return adb path based on operating system detected during import"""
@@ -74,7 +54,6 @@ class Adb(object):
 
         elif runtime_platform == PLATFORM.LINUX:
             return os.path.join(pkg_root, "bin", "linux", "adb")
-
 
     def __init__(self, auto_connect=False):
         self._path = self._get_adb_path()
@@ -97,7 +76,7 @@ class Adb(object):
         return self._update_state()
 
     def _update_state(self) -> State:
-        """Checks if a android phone is connected to adb-server via cable."""
+        """Checks if an android phone is connected to adb-server via cable."""
         command_output = self._exec_command("get-state", return_stdout=True)
 
         if "error" not in command_output:
@@ -117,8 +96,8 @@ class Adb(object):
         self._exec_command("kill-server")
 
     def _exec_command(
-            self, cmd, return_stdout=False, case_sensitive=False
-            ) -> Union[NoReturn, str]:
+        self, cmd, return_stdout=False, case_sensitive=False
+    ) -> Union[NoReturn, str]:
         """Low level function to send shell commands to running adb-server process.
 
         :raises AdbError
@@ -139,31 +118,31 @@ class Adb(object):
     def push(self, source_path, ignore_errors=True):
         """Pushes apk package to android device.
 
-        Before calling `push` function make sure that function `connect` has been
-        called earlier and `self.state`  is ` connected`
+        Before calling `push` function make sure function `connect` has been
+        called earlier and `self.state` value is set to `connected`
 
         extra parameters are passed to adb-server in order to  avoid errors like the following
         faulty error messages:
-            `operation failed apk is already installed on device`
-            `operation failed apk version is lower than the one currently installed on device`
+            `operation failed apk is already installed on the device`
+            `operation failed apk version is lower than the one currently installed on the device`
 
-         -d is to allow downgrade of apk
+         -d is to allow down grade of apk
          -r is to reinstall existing apk
          """
 
         try:
-            self._exec_command(f"install -d  -r {source_path}")
+            self._exec_command(f"install -d -r {source_path}")
         except AdbError as error:
             log.warning(repr(error))
             if not ignore_errors:
                 raise error from None
 
     def pull(self, apk_path: str):
-        """Pull's an apk from the following path in android device."""
+        """Pull's an apk from the following path in the android device."""
         self._exec_command(cmd=f" pull {apk_path}")
 
     def list_device(self, flag: Flag):
-        """Lists installed apk  packages on android device.
+        """Lists installed apk  packages on the android device.
 
         Results can be filtered with PKG_FILTER to get only apk packages
         you are interested. Defaults to list 3d party apps.
@@ -190,18 +169,18 @@ class Adb(object):
 
         """
 
-        log.info("Listing installed apk's in device...")
+        log.info("Listing installed apk's in the device ...")
         output = self._exec_command(
-                f"shell pm list packages {flag.value}",
-                return_stdout=True,
-                case_sensitive=True,
-                )
+            f"shell pm list packages {flag.value}",
+            return_stdout=True,
+            case_sensitive=True,
+        )
 
-        # adb returns packages name  in the form
+        # adb returns packages name in the form
         # package:com.skype.raider
         # we need to strip "package:" prefix
         return [
-                line.split(":", maxsplit=1)[1].strip()
-                for line in output.splitlines()
-                if line.startswith("package:")
-                ]
+            line.split(":", maxsplit=1)[1].strip()
+            for line in output.splitlines()
+            if line.startswith("package:")
+        ]
