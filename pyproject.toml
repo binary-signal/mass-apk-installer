@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "mass-apk"
+name = "massapk"
 version = "0.3.1"
 description = "Automate apk related tasks on android phones"
-authors = ["binary-signal <binary-signal@users.noreply.github..com>"]
+authors = ["binary-signal <binary-signal@users.noreply.github.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
