@@ -52,8 +52,7 @@ def unzippify(zip_file, output):
 
             def __iter__(self):
                 iter_abl = iter(self.zip_obj.namelist())
-                for val in iter_abl:
-                    yield val
+                yield from iter_abl
 
         for item in ZipItemsIter(zip):
             try:
