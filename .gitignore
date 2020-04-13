@@ -102,3 +102,4 @@ ENV/
 /.idea/dictionaries/evan.xml
 /.idea/codeStyles/Project.xml
 /.idea
+/.mypy_cache
