@@ -32,7 +32,7 @@ def zipify(src_path, dest_path):
                     absname = os.path.abspath(os.path.join(abs_src, apk))
                     arcname = absname[len(abs_src) + 1 :]
 
-                    log.info("Extracting path")
+                    log.info("Extracting path "  + path)
                     ofile.write(os.path.join(path, apk), arcname)
 
         dir_to_zip(src_path, zip_file)
