@@ -1,6 +1,7 @@
-from typing import Union, NoReturn, Optional
+from typing import NoReturn, Optional, Union
 
-from massapk import adb, _logger as log
+from massapk import _logger as log
+from massapk import adb
 from massapk.adb import AdbError
 
 

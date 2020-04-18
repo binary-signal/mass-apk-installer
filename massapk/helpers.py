@@ -1,8 +1,8 @@
+import functools
+import logging
 import os
 import platform
-import logging
 from enum import Enum, unique
-import functools
 from timeit import default_timer as timer
 
 log = logging.getLogger(__name__)

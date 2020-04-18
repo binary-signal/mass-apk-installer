@@ -1,11 +1,13 @@
 from __future__ import annotations
-from typing import  Optional
-import os
-import subprocess
+
 import logging
-from enum import Enum, unique
+import os
 import pathlib
-from massapk import runtime_platform, pkg_root
+import subprocess
+from enum import Enum, unique
+from typing import Optional
+
+from massapk import pkg_root, runtime_platform
 from massapk.exceptions import MassApkError
 from massapk.helpers import PLATFORM
 
@@ -49,6 +51,17 @@ class Adb(object):
         if auto_connect:
             self.start_server()
 
+    def __enter__(self):
+        try:
+            self.start_server()
+        except AdbError:
+            self.stop_server()
+            self.start_server()
+        return self
+
+    def __exit__(self, exc_type, exc, exc_tb):
+        self.stop_server()
+
     @property
     def path(self):
         """Get access to detected adb path"""
@@ -86,7 +99,7 @@ class Adb(object):
         self._exec_command("kill-server")
 
     def _exec_command(
-            self, cmd, return_stdout=False, case_sensitive=False, silence_errors=False
+        self, cmd, return_stdout=False, case_sensitive=False, silence_errors=False
     ) -> Optional[str]:
         """Low level function to send shell commands to running adb-server process.
 
@@ -162,10 +175,6 @@ class Adb(object):
               -l: ignored (used for compatibility with older releases)
               -U: also show the package UID
               -u: also include uninstalled packages
-              --show-versioncode: also show the version code
-              --apex-only: only show APEX packages
-              --uid UID: filter to only show packages with the given UID
-              --user USER_ID: only list packages belonging to the given user
 
         """
 

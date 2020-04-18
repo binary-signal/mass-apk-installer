@@ -35,10 +35,13 @@ __version__ = "0.3.1"
 __author__ = "Evan @binary-signal"
 __license__ = "MIT"
 
+import collections
+import logging
 import os
 import sys
-import logging
-import collections
+
+from .adb import Adb
+from .helpers import detect_platform
 
 
 def init_logging(log_level: int = logging.INFO) -> logging.Logger:
@@ -62,9 +65,7 @@ pkg_root = os.path.abspath(__path__[0])
 ApkAbsPath = collections.namedtuple("ApkAbsPath", "name fullpath")
 
 # make platform variable available during import time
-from .helpers import detect_platform
 runtime_platform = detect_platform()
 
-from .adb import Adb
 
 adb = Adb()

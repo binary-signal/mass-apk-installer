@@ -1,6 +1,6 @@
 import sys
-from . import cli
 
+from . import cli
 
 try:
     cli.main()
