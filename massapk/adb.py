@@ -107,6 +107,7 @@ class Adb(object):
         """
 
         cmd = f"{self._path} {cmd}"
+        log.info("Executing " + cmd)
         return_code, output = subprocess.getstatusoutput(cmd)
 
         if return_code:
@@ -120,7 +121,7 @@ class Adb(object):
                 )
                 raise AdbError(f"Command returned error code {cmd}")
 
-            raise AdbError(output + f"\n {cmd}")
+            raise AdbError(output + f" {cmd}")
 
         if return_stdout:
             return output.lower() if case_sensitive else output

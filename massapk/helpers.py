@@ -52,7 +52,7 @@ def elapsed_time(func):
         start = timer()
         result = func(*args, **kwargs)
         end = timer()
-        log.info("{} elapsed time: {}".format(func.__name__, human_time(start, end)))
+        log.debug("{} elapsed time: {}".format(func.__name__, human_time(start, end)))
         return result
 
     return wrapper

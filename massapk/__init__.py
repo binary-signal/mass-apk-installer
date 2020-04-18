@@ -40,8 +40,8 @@ import logging
 import os
 import sys
 
-from .adb import Adb
-from .helpers import detect_platform
+
+
 
 
 def init_logging(log_level: int = logging.INFO) -> logging.Logger:
@@ -62,10 +62,11 @@ def init_logging(log_level: int = logging.INFO) -> logging.Logger:
 _logger = init_logging()
 
 pkg_root = os.path.abspath(__path__[0])
-ApkAbsPath = collections.namedtuple("ApkAbsPath", "name fullpath")
+
 
 # make platform variable available during import time
+from .helpers import detect_platform # NOQA
 runtime_platform = detect_platform()
 
-
+from .adb import Adb  # NOQA
 adb = Adb()
