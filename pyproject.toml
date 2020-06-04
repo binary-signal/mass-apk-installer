@@ -11,7 +11,7 @@ python = "^3.8"
 [tool.poetry.dev-dependencies]
 black = {version = "^19.10b0", allow-prereleases = true}
 pylint = "^2.5.0"
-mypy = "^0.770"
+mypy = "^0.780"
 isort = "^4.3.21"
 
 [build-system]
