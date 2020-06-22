@@ -1,0 +1,12 @@
+[flake8]
+ignore = E203, E266, E402 , E501, W503, F403, F401,  W293
+exclude = .git, __pycache__, .venv, .mypy_cache, .idea
+max-line-length = 120
+max-complexity = 18
+select = B,C,E,F,W,T4,B9
+extend-ignore =
+    # See https://github.com/PyCQA/pycodestyle/issues/373
+    E203,
+
+black-config = pyproject.toml
+
