@@ -13,18 +13,11 @@ def zipify(src_path, dest_path):
 
         def dir_to_zip(path, out_file: zipfile.ZipFile = zip_file):
             if os.path.isdir(path):
-                files = [
-                    item
-                    for item in os.listdir(path)
-                    if os.path.isfile(item) and item.endswith(".zip")
-                ]
+                # FIXME: should keep files ?
+                files = [item for item in os.listdir(path) if os.path.isfile(item) and item.endswith(".zip")]
                 abs_src = os.path.abspath(path)
 
-                apks = [
-                    item
-                    for item in os.listdir(abs_src)
-                    if os.path.isfile(item) and item.endswith(".apk")
-                ]
+                apks = [item for item in os.listdir(abs_src) if os.path.isfile(item) and item.endswith(".apk")]
 
                 for apk in apks:
                     # don't preserver folder structure inside zip file

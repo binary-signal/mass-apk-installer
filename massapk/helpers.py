@@ -37,9 +37,7 @@ def detect_platform() -> PLATFORM:
 def human_time(start, end) -> str:
     hours, rem = divmod(end - start, 3600)
     minutes, seconds = divmod(rem, 60)
-    return "Elapsed time {:0>2}:{:0>2}:{:05.2f}".format(
-        int(hours), int(minutes), seconds
-    )
+    return "Elapsed time {:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds)
 
 
 def elapsed_time(func):

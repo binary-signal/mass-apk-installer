@@ -114,10 +114,7 @@ def cli(ctx):
     help="Indicates which APK file to add to the backup",
 )
 @click.option(
-    "--archive",
-    "-a",
-    is_flag=True,
-    help="Store backup into a zip archive  instead of a directory",
+    "--archive", "-a", is_flag=True, help="Store backup into a zip archive  instead of a directory",
 )
 @click.argument("path")
 @cli.command("backup")
@@ -163,7 +160,7 @@ def backup(path: os.PathLike, list_flag: str, archive: bool):
             # time to use a handy AbsPath named tuple to set correct name to apk pulled with adb
             # this is the correct name of the apk relative to the filesystem
             dest = os.path.join(path, f"{item.name}.apk")
-            shutil.move(f"base.apk", dest)
+            shutil.move("base.apk", dest)
 
     if archive:
         log.info(f"Creating zip archive: {path}.zip, this may take a while")
@@ -173,13 +170,12 @@ def backup(path: os.PathLike, list_flag: str, archive: bool):
     log.info("Back up done.")
 
 
-@click.option(
-    "--clean", is_flag=True, help="Remove files after finish restoring the backup"
-)
+@click.option("--clean", is_flag=True, help="Remove files after finish restoring the backup")
 @click.argument("path", type=click.Path(exists=True))
 @cli.command("restore")
 def restore(path: Union[os.PathLike, str], clean: bool):
     """
+    Restore command for mass apk installer
 
     :param path:
     :param clean:bool delete folder or files used by restore command before function returns
@@ -189,10 +185,8 @@ def restore(path: Union[os.PathLike, str], clean: bool):
     """
     try:
         os.path.exists(path)
-    except FileNotFoundError as error:
-        raise MassApkFileNotFoundError(
-            f"Oups, the path for back file or folder ` {path}` is missing !"
-        )
+    except FileNotFoundError:
+        raise MassApkFileNotFoundError(f"Oups, the path for back file or folder ` {path}` is missing !")
 
     with Adb() as adb_session:
 
@@ -200,38 +194,35 @@ def restore(path: Union[os.PathLike, str], clean: bool):
         while adb_session.state is not adb.ConnectionState.CONNECTED:
             sleep(1)
 
-        cleanup_todo = list()  # keep track of files/dir to delete before returning
+        cleanup_todo = []  # keep track of files/dir to delete before returning
 
         if os.path.isdir(path):  # restore a folder back up
             log.info(f"Restoring back up from path `{path}` *  *Folder*")
             root_dir_back_up = path
 
-        elif (
-                os.path.isfile(path) and os.path.splitext(path)[1] == ".zip"
-        ):  # restore a zip archive back up
+        elif os.path.isfile(path) and os.path.splitext(path)[1] == ".zip":  # restore a zip archive back up
             log.info(f"Restoring back up from path {path} *  *Zip*")
             extract_to = os.path.splitext(path)[0]
             unzipify(zip_file=path, dest_dir=extract_to)
             root_dir_back_up = extract_to  # set as path root the folder with apk extracted from zip file
-            cleanup_todo = list([extract_to, path])
+            cleanup_todo = [extract_to, path]
 
         apks = [file for file in os.listdir(root_dir_back_up) if file.endswith(".apk")]
 
         # calculate total installation size
         size = [os.path.getsize(os.path.join(root_dir_back_up, apk)) for apk in apks]
 
-        log.info(
-            "Total Installation Size: {0:.2f} MB".format(sum(size) / (1024 * 1024))
-        )
+        log.info("Total Installation Size: {0:.2f} MB".format(sum(size) / (1024 * 1024)))
 
         for progress, apk in enumerate(apks, 1):
             log.info(f"[{progress}/{len(apks)}] Installing {apk}")
+            # FIXME: what ?
             # adb_session.push(os.path.join(root_dir_back_up, apk))
 
         if clean:
-            map(
-                lambda f: shutil.rmtree(f) if os.path.isdir(f) else os.remove(f),
-                cleanup_todo,
-            )
+            if os.path.isdir(cleanup_todo):
+                shutil.rmtree(cleanup_todo)
+            else:
+                os.remove(cleanup_todo)
 
     log.info("Restore  done")

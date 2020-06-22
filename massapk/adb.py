@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import List
 import logging
 import os
 import pathlib
@@ -78,9 +79,7 @@ class Adb(object):
 
     def _update_state(self) -> ConnectionState:
         """Checks if an android phone is connected to adb-server via cable."""
-        command_output = self._exec_command(
-            "get-state", return_stdout=True, silence_errors=True
-        )
+        command_output = self.exec_command("get-state", return_stdout=True, silence_errors=True)
 
         if command_output and "error" not in command_output:
             log.warning("No phone connected waiting to connect phone")
@@ -91,16 +90,14 @@ class Adb(object):
     def start_server(self):
         """Starts adb-server process."""
         log.info("Starting adb server...")
-        self._exec_command("start-server")
+        self.exec_command("start-server")
 
     def stop_server(self):
         """Kills adb server."""
         log.info("Killing adb server...")
-        self._exec_command("kill-server")
+        self.exec_command("kill-server")
 
-    def _exec_command(
-        self, cmd, return_stdout=False, case_sensitive=False, silence_errors=False
-    ) -> Optional[str]:
+    def exec_command(self, cmd, return_stdout=False, case_sensitive=False, silence_errors=False) -> Optional[str]:
         """Low level function to send shell commands to running adb-server process.
 
         :raises AdbError
@@ -116,9 +113,7 @@ class Adb(object):
                 return None
 
             if output is None:
-                log.warning(
-                    f"command returned error code {return_code}, but no output, {cmd}"
-                )
+                log.warning(f"command returned error code {return_code}, but no output, {cmd}")
                 raise AdbError(f"Command returned error code {cmd}")
 
             raise AdbError(output + f" {cmd}")
@@ -128,7 +123,7 @@ class Adb(object):
 
         return None
 
-    def push(self, source_path, ignore_errors=True):
+    def push(self, source_path, ignore_errors=True) -> None:
         """Pushes apk package to android device.
 
         Before calling `push` function make sure function `connect` has been
@@ -144,18 +139,18 @@ class Adb(object):
          """
 
         try:
-            self._exec_command(f"install -d -r {source_path}")
+            self.exec_command(f"install -d -r {source_path}")
         except AdbError as error:
             log.warning(repr(error))
             if ignore_errors:
                 return
             raise error from None
 
-    def pull(self, apk_path: str):
+    def pull(self, apk_path: str) -> None:
         """Pull's an apk from the following path in the android device."""
-        self._exec_command(cmd=f" pull {apk_path}")
+        self.exec_command(cmd=f" pull {apk_path}")
 
-    def list_device(self, flag: str):
+    def list_device(self, flag: str) -> Optional[List[str, str]]:
         """Lists installed apk  packages on the android device.
 
         Results can be filtered with PKG_FILTER to get only apk packages
@@ -180,15 +175,12 @@ class Adb(object):
         """
 
         log.info("Listing installed apk's in the device ...")
-        output = self._exec_command(
-            f"shell pm list packages -{flag}", return_stdout=True, case_sensitive=True,
-        )
+        output = self.exec_command(f"shell pm list packages -{flag}", return_stdout=True, case_sensitive=True,)
 
         # adb returns packages name in the form
         # package:com.skype.raider
         # we need to strip "package:" prefix
-        return [
-            line.split(":", maxsplit=1)[1].strip()
-            for line in output.splitlines()
-            if line.startswith("package:")
-        ]
+        if output:
+            return [
+                line.split(":", maxsplit=1)[1].strip() for line in output.splitlines() if line.startswith("package:")
+            ]
