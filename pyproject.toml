@@ -10,7 +10,7 @@ python = "^3.8"
 
 [tool.poetry.dev-dependencies]
 black = {version = "*", allow-prereleases = true}
-mypy = "^0.770"
+mypy = "^0.782"
 pylint = "^2.5.2"
 isort = {extras = ["pyproject"], version = "^4.3.21"}
 autopep8 = "^1.5.3"
