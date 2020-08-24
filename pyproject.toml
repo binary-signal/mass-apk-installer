@@ -31,7 +31,7 @@ flake8-quotes = "^3.2.0"
 flake8-string-format = "^0.3.0"
 flake8-broken-line = "^0.2.0"
 pep8-naming = "^0.10.0"
-darglint = "^1.4.1"
+darglint = "^1.5.3"
 seed-isort-config = "^2.2.0"
 
 
