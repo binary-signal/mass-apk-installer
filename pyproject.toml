@@ -14,7 +14,7 @@ mypy = "^0.770"
 pylint = "^2.5.2"
 isort = {extras = ["pyproject"], version = "^4.3.21"}
 autopep8 = "^1.5.3"
-flake8 = "^3.8.3"
+flake8 = "^3.8.4"
 flake8-docstrings = "^1.5.0"
 flake8-mypy = "^17.8.0"
 flake8-black = "^0.2.0"
