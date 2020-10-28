@@ -28,4 +28,6 @@ def test_platform():
 
 
 def test_exec_command():
-    from mass_apk.adb import exec_command
+    from mass_apk.adb import Adb
+
+    output = Adb().exec_command("help")
