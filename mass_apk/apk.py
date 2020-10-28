@@ -1,9 +1,9 @@
 from typing import Optional, List
 import collections
 
-from massapk import _logger as log
-from massapk import adb
-from massapk.adb import AdbError
+from mass_apk import _logger as log
+from mass_apk import adb
+from mass_apk.adb import AdbError
 
 __all__ = ["ApkError", "map_apk_paths", "absolute_path", "ApkAbsPath"]
 

@@ -7,9 +7,9 @@ import pathlib
 import subprocess
 from enum import Enum, unique
 
-from massapk import pkg_root, runtime_platform
-from massapk.exceptions import MassApkError
-from massapk.helpers import PLATFORM
+from mass_apk import pkg_root, runtime_platform
+from mass_apk.exceptions import MassApkError
+from mass_apk.helpers import PLATFORM
 
 
 log = logging.getLogger(__name__)

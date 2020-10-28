@@ -7,14 +7,14 @@ from typing import List, Optional, Union
 
 import click
 
-from massapk import __version__
-from massapk import _logger as log
-from massapk import adb
-from massapk.adb import Adb
-from massapk.apk import AdbError, map_apk_paths
-from massapk.exceptions import MassApkFileNotFoundError
-from massapk.helpers import elapsed_time
-from massapk.ziptools import unzipify, zipify
+from mass_apk import __version__
+from mass_apk import _logger as log
+from mass_apk import adb
+from mass_apk.adb import Adb
+from mass_apk.apk import AdbError, map_apk_paths
+from mass_apk.exceptions import MassApkFileNotFoundError
+from mass_apk.helpers import elapsed_time
+from mass_apk.ziptools import unzipify, zipify
 
 
 # def parse_args() -> argparse.Namespace:
@@ -78,30 +78,28 @@ def main():
 
 
 @click.group()
-@click.pass_context
-def cli(ctx):
+def cli():
     """
-    A CLI for ProtonVPN.
-    Usage:
-        massapk (b | backup) [<path>] [-l <list_flag>] [-a | --archive]
-        massapk (r | restore) [<path>]  [-c | --clean]
-        massapk (-h | --help)
-        massapk (-v | --version)
-    Options:
-        -a, --archive       Convert back folder into zip archive.
-        -r, --random        Select a random ProtonVPN server.
-        --cc CODE           Determine the country for fastest connect.
-        --sc                Connect to the fastest Secure-Core server.
-        --p2p               Connect to the fastest torrent server.
-        --tor               Connect to the fastest Tor server.
-        -p PROTOCOL         Determine the protocol (UDP or TCP).
-        -h, --help          Show this help message.
-        -v, --version       Display version.
-    Commands:
-        b, backup          Make Android backup.
-        r, restore         Restore back to Android device.
-    Arguments:
-        <servername>        Servername (CH#4, CH-US-1, HK5-Tor).
+    Usage:\n
+        mass-apk (b | backup) [<path>] [-l <list_flag>] [-a | --archive]\n
+        mass-apk (r | restore) [<path>]  [-c | --clean]\n
+        mass-apk (-h | --help)\n
+        mass-apk (-v | --version)\n
+    Options:\n
+        -a, --archive       Convert back folder into zip archive.\n
+        -r, --random        Select a random ProtonVPN server.\n
+        --cc CODE           Determine the country for fastest connect.\n
+        --sc                Connect to the fastest Secure-Core server.\n
+        --p2p               Connect to the fastest torrent server.\n
+        --tor               Connect to the fastest Tor server.\n
+        -p PROTOCOL         Determine the protocol (UDP or TCP).\n
+        -h, --help          Show this help message.\n
+        -v, --version       Display version.\n
+    Commands:\n
+        b, backup          Make Android backup.\n
+        r, restore         Restore back to Android device.\n
+    Arguments:\n
+        <servername>        Servername (CH#4, CH-US-1, HK5-Tor).\n
     """
     pass
 

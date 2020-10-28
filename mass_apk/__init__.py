@@ -42,6 +42,7 @@ import collections
 import logging
 import os
 import sys
+from pathlib import Path
 
 
 def init_logging(log_level: int = logging.INFO) -> logging.Logger:
@@ -63,7 +64,7 @@ def init_logging(log_level: int = logging.INFO) -> logging.Logger:
 _logger = init_logging()
 
 
-pkg_root = os.path.abspath(".")
+pkg_root = Path(os.path.abspath(__file__)).parent
 
 
 # make platform variable available during import time

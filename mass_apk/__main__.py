@@ -2,7 +2,7 @@
 
 >>> python -m massapk
 """
-from massapk import cli
+from mass_apk import cli
 
 
 if __name__ == "__main__":
