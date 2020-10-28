@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "massapk"
+name = "mass_apk"
 version = "0.3.1"
 description = "Automate apk related tasks on android phones"
 authors = ["binary-signal <binary-signal@users.noreply.github.com>"]
@@ -19,7 +19,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-coverage = "^5.3"
+click = "^7.1.2"
 
 [tool.poetry.dev-dependencies]
 black = {version = "*", allow-prereleases = true}
@@ -79,8 +79,6 @@ combine_as_imports = true
 [tool.autopep8]
 max_line_length = 88
 
-[tool.flakehell.plugins]
-pycodestyle = ["+*"]
 
 [tool.poetry.scripts]
 mass-apk = 'mass_apk.cli:main'
