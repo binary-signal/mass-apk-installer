@@ -69,7 +69,7 @@ from mass_apk.ziptools import unzipify, zipify
 
 
 def main():
-    """Main function."""
+    """Main entry for mass apk when invoked as a script."""
     try:
         cli()
     except KeyboardInterrupt:
@@ -134,9 +134,8 @@ def backup(path: os.PathLike, list_flag: str, archive: bool):
         while adb_session.state is not adb_session.ConnectionState.CONNECTED:
             sleep(1)
             wait_count += 1
-            click.echo(".")
-            if wait_count % 5:
-                click.clear()
+            if wait_count == 5:
+                return
 
         log.info("Device connected")
 

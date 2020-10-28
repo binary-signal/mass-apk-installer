@@ -1,3 +1,5 @@
+"""Common operation and manipulation for paths in android devices"""
+
 from typing import Optional, List
 import collections
 
@@ -10,13 +12,19 @@ __all__ = ["ApkError", "map_apk_paths", "absolute_path", "ApkAbsPath"]
 
 
 class ApkError(AdbError):
-    pass
+    """Base exception class for `apk` module."""
 
 
 ApkAbsPath = collections.namedtuple("ApkAbsPath", "name fullpath")
 
 
 def map_apk_paths(apks: List[str]) -> List[ApkAbsPath]:
+    """Get mapping for a list of packages.
+    
+    Return a dict object with key package name and value absolute
+    path package.
+    
+    """
     abs_paths = []
     for pkg in apks:
         if pkg_abs_path := absolute_path(pkg):
