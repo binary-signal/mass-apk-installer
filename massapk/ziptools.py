@@ -1,23 +1,31 @@
+"""Compression related functions."""
+
 import os
 import zipfile
+from typing import Optional, Union
 
 __all__ = ["unzipify", "zipify"]
 
 
 def zipify(src_path, dest_path):
-    """
-    Compress a folder into a zip archive
-    """
-
+    """Compress a folder into a zip archive."""
     with zipfile.ZipFile(dest_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
 
         def dir_to_zip(path, out_file: zipfile.ZipFile = zip_file):
             if os.path.isdir(path):
                 # FIXME: should keep files ?
-                files = [item for item in os.listdir(path) if os.path.isfile(item) and item.endswith(".zip")]
+                files = [
+                    item
+                    for item in os.listdir(path)
+                    if os.path.isfile(item) and item.endswith(".zip")
+                ]
                 abs_src = os.path.abspath(path)
 
-                apks = [item for item in os.listdir(abs_src) if os.path.isfile(item) and item.endswith(".apk")]
+                apks = [
+                    item
+                    for item in os.listdir(abs_src)
+                    if os.path.isfile(item) and item.endswith(".apk")
+                ]
 
                 for apk in apks:
                     # don't preserver folder structure inside zip file
@@ -29,14 +37,15 @@ def zipify(src_path, dest_path):
         dir_to_zip(src_path, zip_file)
 
 
-def unzipify(zip_file, dest_dir=None):
-    """
-    Decompress zip file into folder
+def unzipify(
+    zip_file: Union[str, os.PathLike],
+    dest_dir: Optional[Union[str, os.PathLike]] = None,
+):
+    """Decompress zip file into folder.
 
     If no destination directory is specified,
     use the current working directory.
     """
-
     if dest_dir is None:
         dest_dir = os.getcwd()
     if zip_file.is_zipfile(zip_file):

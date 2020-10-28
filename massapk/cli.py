@@ -69,7 +69,7 @@ from massapk.ziptools import unzipify, zipify
 
 
 def main():
-    """Main function"""
+    """Main function."""
     try:
         cli()
     except KeyboardInterrupt:
@@ -111,26 +111,36 @@ def cli(ctx):
     "-l",
     default="3",
     type=click.Choice(["3", "S"], case_sensitive=True),
+    show_default=True,
     help="Indicates which APK file to add to the backup",
 )
 @click.option(
-    "--archive", "-a", is_flag=True, help="Store backup into a zip archive  instead of a directory",
+    "--archive",
+    "-a",
+    is_flag=True,
+    help="Store backup into a zip archive  instead of a directory",
 )
-@click.argument("path")
+@click.argument("path", metavar="PATH", type=click.Path())
 @cli.command("backup")
 def backup(path: os.PathLike, list_flag: str, archive: bool):
-    """
-    Back up android device
-    """
+    """Back up android device."""
     if isinstance(path, pathlib.Path) is False:
         path = pathlib.Path(path)
+        if path.exists():
+            click.echo("Back up path already exists")
 
     with Adb() as adb_session:
         # wait for adb-server to detect phone
+        log.info("Waiting for device to be connected via USB...")
+        wait_count = 0
         while adb_session.state is not adb_session.ConnectionState.CONNECTED:
             sleep(1)
+            wait_count += 1
+            click.echo(".")
+            if wait_count % 5:
+                click.clear()
 
-        log.info("Phone device connected")
+        log.info("Device connected")
 
         # get user installed packages
         apks = adb_session.list_device(list_flag)
@@ -140,7 +150,7 @@ def backup(path: os.PathLike, list_flag: str, archive: bool):
 
         parsed_paths = map_apk_paths(apks)
 
-        log.info(f"Found {len(parsed_paths)} installed packages")
+        log.info("Found %s installed packages", len(apks))
 
         try:
             os.makedirs(path)
@@ -149,7 +159,8 @@ def backup(path: os.PathLike, list_flag: str, archive: bool):
             sys.exit(-1)
 
         for progress, item in enumerate(parsed_paths, 1):
-            log.info(f"[{progress:4}/{len(parsed_paths):4}] pulling ... {item.name}")
+            msg = f"[{progress:4}/{len(parsed_paths):4}] pulling ... {item.name}"
+            log.info(msg)
             try:
                 adb_session.pull(item.fullpath)  # get apk from device
             except AdbError:
@@ -170,10 +181,12 @@ def backup(path: os.PathLike, list_flag: str, archive: bool):
     log.info("Back up done.")
 
 
-@click.option("--clean", is_flag=True, help="Remove files after finish restoring the backup")
+@click.option(
+    "--clean", is_flag=True, help="Remove files after finish restoring the backup"
+)
 @click.argument("path", type=click.Path(exists=True))
 @cli.command("restore")
-def restore(path: Union[os.PathLike, str], clean: bool):
+def restore(path: Union["os.PathLike[str]", str], clean: bool):
     """
     Restore command for mass apk installer
 
@@ -186,7 +199,9 @@ def restore(path: Union[os.PathLike, str], clean: bool):
     try:
         os.path.exists(path)
     except FileNotFoundError:
-        raise MassApkFileNotFoundError(f"Oups, the path for back file or folder ` {path}` is missing !")
+        raise MassApkFileNotFoundError(
+            f"Oups, the path for back file or folder ` {path}` is missing !"
+        )
 
     with Adb() as adb_session:
 
@@ -200,7 +215,9 @@ def restore(path: Union[os.PathLike, str], clean: bool):
             log.info(f"Restoring back up from path `{path}` *  *Folder*")
             root_dir_back_up = path
 
-        elif os.path.isfile(path) and os.path.splitext(path)[1] == ".zip":  # restore a zip archive back up
+        elif (
+            os.path.isfile(path) and os.path.splitext(path)[1] == ".zip"
+        ):  # restore a zip archive back up
             log.info(f"Restoring back up from path {path} *  *Zip*")
             extract_to = os.path.splitext(path)[0]
             unzipify(zip_file=path, dest_dir=extract_to)
@@ -212,7 +229,9 @@ def restore(path: Union[os.PathLike, str], clean: bool):
         # calculate total installation size
         size = [os.path.getsize(os.path.join(root_dir_back_up, apk)) for apk in apks]
 
-        log.info("Total Installation Size: {0:.2f} MB".format(sum(size) / (1024 * 1024)))
+        log.info(
+            "Total Installation Size: {0:.2f} MB".format(sum(size) / (1024 * 1024))
+        )
 
         for progress, apk in enumerate(apks, 1):
             log.info(f"[{progress}/{len(apks)}] Installing {apk}")
@@ -220,9 +239,10 @@ def restore(path: Union[os.PathLike, str], clean: bool):
             # adb_session.push(os.path.join(root_dir_back_up, apk))
 
         if clean:
-            if os.path.isdir(cleanup_todo):
-                shutil.rmtree(cleanup_todo)
-            else:
-                os.remove(cleanup_todo)
+            for item in cleanup_todo:
+                if os.path.isdir(item):
+                    shutil.rmtree(item)
+                else:
+                    os.remove(item)
 
     log.info("Restore  done")

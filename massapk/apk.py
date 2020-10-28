@@ -32,7 +32,9 @@ def absolute_path(pkg_name: str) -> Optional[str]:
     """
 
     try:
-        output = adb.exec_command(f"shell pm path {pkg_name}", return_stdout=True, case_sensitive=True)
+        output = adb.exec_command(
+            f"shell pm path {pkg_name}", return_stdout=True, case_sensitive=True
+        )
 
     except AdbError:
         log.warning(f"Path is not valid for {pkg_name}")

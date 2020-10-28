@@ -1,9 +1,9 @@
-import sys
+"""Main entry for mass apk when invoked as python module.
 
-from . import cli
+>>> python -m massapk
+"""
+from massapk import cli
 
-try:
+
+if __name__ == "__main__":
     cli.main()
-except KeyboardInterrupt:
-    print("Received SIGINT. Quit...")
-    sys.exit(-1)

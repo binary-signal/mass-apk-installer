@@ -1,4 +1,7 @@
-"""
+"""Mass Apk Installer.
+
+Automate back up of android devices
+
  Author:      Evan
  Created:     19/10/2011
  Last Modified: 13/03/2020
@@ -42,11 +45,14 @@ import sys
 
 
 def init_logging(log_level: int = logging.INFO) -> logging.Logger:
-    """Creates `mass-apk` logger
+    """Configure logging in mass apk package.
 
-    Create a module wide logger instance."""
+    Create a module wide logger instance.
+    """
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter(fmt="%(name)-17s :: %(levelname)-7s - %(message)s"))
+    handler.setFormatter(
+        logging.Formatter(fmt="%(name)-17s :: %(levelname)-7s - %(message)s")
+    )
     logger = logging.getLogger(__name__)
     logger.setLevel(log_level)
     logger.addHandler(handler)
@@ -56,14 +62,15 @@ def init_logging(log_level: int = logging.INFO) -> logging.Logger:
 
 _logger = init_logging()
 
-pkg_root = os.path.abspath(__path__[0])
+
+pkg_root = os.path.abspath(".")
 
 
 # make platform variable available during import time
-from .helpers import detect_platform  # NOQA
+from .helpers import detect_platform  # noqa: E402
 
 runtime_platform = detect_platform()
 
-from .adb import Adb  # NOQA
+from .adb import Adb  # noqa: E402
 
 adb = Adb()

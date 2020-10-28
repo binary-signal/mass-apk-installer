@@ -1,40 +1,41 @@
-from __future__ import annotations
+# from __future__ import annotations
 
-from typing import List
+from typing import List, Union
 import logging
 import os
 import pathlib
 import subprocess
 from enum import Enum, unique
-from typing import Optional
 
 from massapk import pkg_root, runtime_platform
 from massapk.exceptions import MassApkError
 from massapk.helpers import PLATFORM
 
+
 log = logging.getLogger(__name__)
 
 
 class AdbError(MassApkError):
-    pass
+    """Exception raised when interacting with adb executable."""
 
 
 class ApkAlreadyExists(AdbError):
-    pass
+    """Exception raised when apk exist in device."""
 
 
 class Adb(object):
+    """Interface to adb server."""
+
     @unique
     class ConnectionState(Enum):
-        """Define adb-server state enum"""
+        """Define adb-server state enum."""
 
         CONNECTED = True
         DISCONNECTED = False
 
     @classmethod
     def _get_adb_path(cls) -> os.PathLike:
-        """Return adb path based on operating system detected during import"""
-
+        """Return adb path based on operating system detected during import."""
         if runtime_platform == PLATFORM.OSX:
             path = os.path.join(pkg_root, "bin", "osx", "adb")
         elif runtime_platform == PLATFORM.WIN:
@@ -65,21 +66,23 @@ class Adb(object):
 
     @property
     def path(self):
-        """Get access to detected adb path"""
+        """Get access to detected adb path."""
         return self._path
 
     @property
     def state(self) -> ConnectionState:
         """
-        Gets connection state of adb server
+        Get connection state of adb server.
 
         If `adb-server` state is `device` then phone is connected
         """
         return self._update_state()
 
     def _update_state(self) -> ConnectionState:
-        """Checks if an android phone is connected to adb-server via cable."""
-        command_output = self.exec_command("get-state", return_stdout=True, silence_errors=True)
+        """Check if an android phone is connected to adb-server via cable."""
+        command_output = self.exec_command(
+            "get-state", return_stdout=True, silence_errors=True
+        )
 
         if command_output and "error" not in command_output:
             log.warning("No phone connected waiting to connect phone")
@@ -88,32 +91,38 @@ class Adb(object):
         return self._state
 
     def start_server(self):
-        """Starts adb-server process."""
+        """Start adb-server process."""
         log.info("Starting adb server...")
         self.exec_command("start-server")
 
     def stop_server(self):
-        """Kills adb server."""
+        """Kill adb server."""
         log.info("Killing adb server...")
         self.exec_command("kill-server")
 
-    def exec_command(self, cmd, return_stdout=False, case_sensitive=False, silence_errors=False) -> Optional[str]:
-        """Low level function to send shell commands to running adb-server process.
+    def exec_command(
+        self, cmd, return_stdout=False, case_sensitive=False, silence_errors=False
+    ) -> Union[str, None]:
+        """Low level function to send command to running adb-server process.
 
-        :raises AdbError
+        :raises AdbError if executed command returns non zero exit code and command output
+        is empty string.
         """
-
         cmd = f"{self._path} {cmd}"
-        log.info("Executing " + cmd)
+        log.info("Executing %s", cmd)
         return_code, output = subprocess.getstatusoutput(cmd)
 
         if return_code:
             if silence_errors:
                 log.error(output)
-                return None
+                return ""
 
-            if output is None:
-                log.warning(f"command returned error code {return_code}, but no output, {cmd}")
+            if output == "":
+                log.warning(
+                    "command returned error code %s, but no output, %s",
+                    return_code,
+                    cmd,
+                )
                 raise AdbError(f"Command returned error code {cmd}")
 
             raise AdbError(output + f" {cmd}")
@@ -129,29 +138,28 @@ class Adb(object):
         Before calling `push` function make sure function `connect` has been
         called earlier and `self.state` value is set to `connected`
 
-        extra parameters are passed to adb-server in order to  avoid errors like the following
-        faulty error messages:
+        extra parameters are passed to adb-server in order to  avoid errors like
+        the following faulty error messages:
             `operation failed apk is already installed on the device`
-            `operation failed apk version is lower than the one currently installed on the device`
+            `operation failed apk version is lower than the one currently installed
+            on the device`
 
          -d allow apk version down grade
          -r reinstall apk if already installed on device
-         """
-
+        """
         try:
             self.exec_command(f"install -d -r {source_path}")
         except AdbError as error:
             log.warning(repr(error))
-            if ignore_errors:
-                return
-            raise error from None
+            if not ignore_errors:
+                raise error
 
     def pull(self, apk_path: str) -> None:
-        """Pull's an apk from the following path in the android device."""
+        """Pull an apk from the following path in the android device."""
         self.exec_command(cmd=f" pull {apk_path}")
 
-    def list_device(self, flag: str) -> Optional[List[str, str]]:
-        """Lists installed apk  packages on the android device.
+    def list_device(self, flag: str) -> List[str]:
+        """Return a list with installed apk  packages on the android device.
 
         Results can be filtered with PKG_FILTER to get only apk packages
         you are interested. Defaults to list 3d party apps.
@@ -173,14 +181,21 @@ class Adb(object):
               -u: also include uninstalled packages
 
         """
-
         log.info("Listing installed apk's in the device ...")
-        output = self.exec_command(f"shell pm list packages -{flag}", return_stdout=True, case_sensitive=True,)
+        output = self.exec_command(
+            f"shell pm list packages -{flag}",
+            return_stdout=True,
+            case_sensitive=True,
+        )
 
         # adb returns packages name in the form
         # package:com.skype.raider
         # we need to strip "package:" prefix
-        if output:
-            return [
-                line.split(":", maxsplit=1)[1].strip() for line in output.splitlines() if line.startswith("package:")
-            ]
+        if output is None:
+            raise ValueError("Output is None")
+
+        return [
+            line.split(":", maxsplit=1)[1].strip()
+            for line in output.splitlines()
+            if line.startswith("package:")
+        ]
