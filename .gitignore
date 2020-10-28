@@ -103,3 +103,4 @@ ENV/
 /.idea/codeStyles/Project.xml
 /.idea
 /.mypy_cache
+.vscode
