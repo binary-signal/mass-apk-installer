@@ -7,37 +7,43 @@ import platform
 from enum import Enum, unique
 from timeit import default_timer as timer
 
+__all__ = ["Platform", "detect_platform", "human_time", "elapsed_time"]
+
 log = logging.getLogger(__name__)
 
 
 @unique
-class PLATFORM(Enum):
-    """Platoform enum used to detected running operating system."""
+class Platform(Enum):
+    """Platform enum used to detected running operating system."""
 
     OSX = "osx"
     LINUX = "linux"
     WIN = "win"
 
 
-def detect_platform() -> PLATFORM:
+def detect_platform() -> Platform:
     """Detect running operating system.
 
-    :raises RuntimeError if operating system can't be detected
+    raises RuntimeError if operating system can't be detected.
     """
     detected_system = platform.system()
 
     if os.name == "posix" and detected_system == "Darwin":
-        return PLATFORM.OSX
+        return Platform.OSX
     elif os.name == "posix" and detected_system == "Linux":
-        return PLATFORM.LINUX
+        return Platform.LINUX
     elif os.name == "nt" and detected_system == "Windows":
-        return PLATFORM.WIN
+        return Platform.WIN
 
     raise RuntimeError("Unsupported OS")
 
 
 def human_time(start: float, end: float) -> str:
-    """Create a human redable string for elapsed time."""
+    """Create a human readable string.
+
+    Create a human readable string for elapsed time between
+    start and end timestamps.
+    """
     hours, rem = divmod(end - start, 3600)
     minutes, seconds = divmod(rem, 60)
     return "Elapsed time {:0>2}:{:0>2}:{:05.2f}".format(
@@ -46,7 +52,7 @@ def human_time(start: float, end: float) -> str:
 
 
 def elapsed_time(func):
-    """Decorate a function to measure it's execution time."""
+    """Decorate function `func` to measure its execution time."""
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
