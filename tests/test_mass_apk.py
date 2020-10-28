@@ -1,19 +1,31 @@
-from unittest import TestCase
+"""Test module for mass apk."""
 
-from massapk import __version__
+from mass_apk import __version__
 
 
 def test_version():
-    assert __version__ == '0.1.0'
+    assert __version__ == '0.3.1'
 
 
-class TestAdb(TestCase):
-    def test_start_server(self):
-        from massapk import adb
 
-        try:
-            adb.stop_server()
-            adb.start_server()
-            adb.stop_server()
-        except Exception:
-            self.fail()
+def test_start_server():
+    from mass_apk import adb
+    from mass_apk.exceptions import MassApkError
+
+    errored = False
+    try:
+        adb.stop_server()
+        adb.start_server()
+        adb.stop_server()
+    except MassApkError:
+        errored = True
+    assert not errored
+
+def test_platform():
+    import mass_apk
+
+    assert mass_apk.detect_platform().value == "osx"
+
+
+def test_exec_command():
+    from mass_apk.adb import exec_command
