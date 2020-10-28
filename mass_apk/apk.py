@@ -4,6 +4,7 @@ import collections
 from mass_apk import _logger as log
 from mass_apk import adb
 from mass_apk.adb import AdbError
+from mass_apk.exceptions import MassApkError
 
 __all__ = ["ApkError", "map_apk_paths", "absolute_path", "ApkAbsPath"]
 
@@ -26,23 +27,20 @@ def map_apk_paths(apks: List[str]) -> List[ApkAbsPath]:
     return [ApkAbsPath(*abs_path) for abs_path in abs_paths]
 
 
-def absolute_path(pkg_name: str) -> Optional[str]:
-    """
-    Returns the full path of a package in android device storage
-    """
-
+def absolute_path(pkg_name: str) -> str:
+    """Returnssss the full path of a package in android device storage."""
     try:
         output = adb.exec_command(
             f"shell pm path {pkg_name}", return_stdout=True, case_sensitive=True
         )
 
     except AdbError:
-        log.warning(f"Path is not valid for {pkg_name}")
-        return None
+        raise MassApkError("Path is not valid for %s", pkg_name)
 
     # bin returns packages name in the form
     # package:/data/app/com.dog.raider-2/base.apk
     # we need to strip package: prefix in returned string
-    if output:
+    if output and output.startswith("package:"):
         return output.split(":", maxsplit=1)[1].strip()
-    return None
+
+    raise MassApkError("Path is not valid for %s %s", pkg_name, output)
