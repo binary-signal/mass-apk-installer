@@ -47,7 +47,7 @@ darglint = "^1.4.1"
 seed-isort-config = "^2.2.0"
 pydocstyle = "^5.1.1"
 flakehell = "^0.7.0"
-pytest = "^6.1.1"
+pytest = "^6.2.1"
 coverage = "^5.3"
 
 
