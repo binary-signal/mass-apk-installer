@@ -38,14 +38,13 @@ __version__ = "0.3.1"
 __author__ = "Evan @binary-signal"
 __license__ = "MIT"
 
-import collections
 import logging
 import os
 import sys
 from pathlib import Path
 
 
-def init_logging(log_level: int = logging.INFO) -> logging.Logger:
+def init_logging(level: int = logging.INFO) -> logging.Logger:
     """Configure logging in mass apk package.
 
     Create a module wide logger instance.
@@ -54,14 +53,14 @@ def init_logging(log_level: int = logging.INFO) -> logging.Logger:
     handler.setFormatter(
         logging.Formatter(fmt="%(name)-17s :: %(levelname)-7s - %(message)s")
     )
-    logger = logging.getLogger(__name__)
-    logger.setLevel(log_level)
-    logger.addHandler(handler)
+    _logger = logging.getLogger(__name__)
+    _logger.setLevel(level)
+    _logger.addHandler(handler)
 
-    return logger
+    return _logger
 
 
-_logger = init_logging()
+logger = init_logging()
 
 
 pkg_root = Path(os.path.abspath(__file__)).parent
