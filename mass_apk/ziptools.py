@@ -1,7 +1,7 @@
 """Compression related functions."""
 
 import os
-import zipfile
+from zipfile import ZipFile, ZIP_DEFLATED, is_zipfile
 from typing import Optional, Union
 from pathlib import Path
 
@@ -10,9 +10,9 @@ __all__ = ["unzipify", "zipify"]
 
 def zipify(src_path: Union[str, os.PathLike], dest_path: Union[str, os.PathLike]):
     """Compress a folder into a zip archive."""
-    with zipfile.ZipFile(dest_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
+    with ZipFile(dest_path, "w", ZIP_DEFLATED) as zip_file:
 
-        def dir_to_zip(path, out_file: zipfile.ZipFile = zip_file):
+        def dir_to_zip(path, out_file: ZipFile = zip_file):
             abs_src = os.path.abspath(path)
 
             if os.path.isdir(abs_src):
@@ -42,14 +42,15 @@ def unzipify(
 
     raises ValueError if `file` arg is not a zip file.
     """
-    if zipfile.is_zipfile(file):
-        # create output directory if doesn't exist
-        if dest_dir is None:
-            dest_dir = os.getcwd()
-        else:
-            os.makedirs(dest_dir)
 
-        with zipfile.ZipFile(file, "r") as zip_handle:
-            zip_handle.extractall(dest_dir)
+    # create output directory if doesn't exist
+    if dest_dir is None:
+        dest_dir = os.getcwd()
 
-    raise ValueError(f"Not a zip file {file}")
+    if not is_zipfile(file):
+        raise ValueError(f"Not a zip file {file}")
+
+    os.makedirs(dest_dir)
+
+    with ZipFile(file, "r") as file:
+        file.extractall(dest_dir)
