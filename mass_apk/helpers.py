@@ -7,10 +7,12 @@ import platform
 from enum import Enum, unique
 from timeit import default_timer as timer
 
-__all__ = ["Platform", "detect_platform", "human_time", "elapsed_time"]
+__all__ = ["Platform", "detect_platform", "human_time", "elapsed_time", "MB"]
 
 log = logging.getLogger(__name__)
 
+
+MB = 1024 * 1024
 
 @unique
 class Platform(Enum):
