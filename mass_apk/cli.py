@@ -1,71 +1,18 @@
 import os
 import shutil
 import sys
-from time import sleep
 import pathlib
-from typing import  Union
+from typing import Union
 
 import click
 
-from mass_apk import __version__
-from mass_apk import _logger as log
-from mass_apk import adb
+
+from mass_apk import logger as log
 from mass_apk.adb import Adb
 from mass_apk.apk import AdbError, map_apk_paths
-from mass_apk.exceptions import MassApkFileNotFoundError, MassApkError
-from mass_apk.helpers import elapsed_time
+from mass_apk.exceptions import MassApkFileNotFoundError
+from mass_apk.helpers import MB
 from mass_apk.ziptools import unzipify, zipify
-
-
-# def parse_args() -> argparse.Namespace:
-#     """Argument parser for mass-apk"""
-#     parser = argparse.ArgumentParser(prog="mass-apk")
-#     subparsers = parser.add_subparsers(
-#         title="commands", dest="command", required=True, help="help for commands"
-#     )
-#
-#     # create sub parser for "backup" command
-#     backup_sub = subparsers.add_parser("backup", help="backup help")
-#     backup_sub.add_argument(
-#         "-f",
-#         "--flag",
-#         type=adb.PackageFlag,
-#         default=adb.PackageFlag.USER,
-#         help="Specify which apks to backup. Defaults to  user apks.",
-#     )
-#
-#     backup_sub.add_argument(
-#         "-p",
-#         "--path",
-#         type=str,
-#         default=os.getcwd(),
-#         help="Folder or Path on filesystem for saving back up",
-#     )
-#     backup_sub.add_argument(
-#         "-a",
-#         "--archive",
-#         action="store_true",
-#         help="compress back up folder into zip file",
-#     )
-#
-#     # create the parser for "restore" command
-#     restore_sub = subparsers.add_parser("restore", help="help for restore")
-#     restore_sub.add_argument(
-#         "-p",
-#         "--path",
-#         type=str,
-#         required=True,
-#         help="Back up File or Folder to restore from",
-#     )
-#
-#     restore_sub.add_argument(
-#         "-c",
-#         "--clean",
-#         action="store_true",
-#         help="remove back up File or Folder defined in --path after restoring",
-#     )
-#
-#     return parser.parse_args()
 
 
 def main():
@@ -141,7 +88,6 @@ def backup(path: os.PathLike, list_flag: str, archive: bool):
 
     log.info("Discovering apk paths, this may take a while...")
     # get full path on the android filesystem for each installed package
-
     parsed_paths = map_apk_paths(apks)
 
     log.info("Found %s installed packages", len(apks))
@@ -229,7 +175,7 @@ def restore(path: Union["os.PathLike[str]", str], clean: bool):
     size = [os.path.getsize(os.path.join(root_dir_back_up, apk)) for apk in apks]
 
     log.info(
-        "Total Installation Size: {0:.2f} MB".format(sum(size) / (1024 * 1024))
+        "Total Installation Size: {0:.2f} MB".format(sum(size) / (MB))
     )
 
     for progress, apk in enumerate(apks, 1):
