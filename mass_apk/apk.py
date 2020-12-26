@@ -12,6 +12,7 @@ __all__ = ["ApkError", "map_apk_paths", "absolute_path", "ApkAbsPath"]
 
 log = logging.getLogger(__name__)
 
+
 class ApkError(AdbError):
     """Base exception class for `apk` module."""
 
