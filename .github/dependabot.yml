@@ -1,0 +1,36 @@
+version: 2
+updates:
+- package-ecosystem: pip
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "03:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: flake8-annotations
+    versions:
+    - 2.5.0
+    - 2.6.0
+    - 2.6.1
+  - dependency-name: flake8-bugbear
+    versions:
+    - 20.11.1
+    - 21.3.1
+    - 21.3.2
+  - dependency-name: darglint
+    versions:
+    - 1.5.8
+    - 1.6.0
+    - 1.7.0
+  - dependency-name: coverage
+    versions:
+    - "5.4"
+  - dependency-name: pytest
+    versions:
+    - 6.2.2
+  - dependency-name: isort
+    versions:
+    - 5.7.0
+  - dependency-name: flake8-comprehensions
+    versions:
+    - 3.3.1
