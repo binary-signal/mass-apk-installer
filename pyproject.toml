@@ -19,7 +19,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-click = "^7.1.2"
+click = "^8.0.0"
 
 [tool.poetry.dev-dependencies]
 black = {version = "*", allow-prereleases = true}
